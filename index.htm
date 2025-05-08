@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Axle Jack 3D Tour</title>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="top-header">
+        <div class="header-content">
+          <img src="media/logo.png" alt="Logo" class="logo">
+        </div>
+    </header>
+    <div id="modelTitle">65 Ton Floating Auto-Retract Axle Jack</div>
+    <div id="container"></div>
+    
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <h2>Loading...</h2>
+            <div class="progress-bar">
+                <div id="progress" class="progress"></div>
+            </div>
+        </div>
+    </div>
+    <div id="specModal">
+        <h2 style="margin-top: 0;">Technical Specifications</h2>
+        <img id="closeSpecIcon" src="media/close.png" alt="Close">
+        <div id="specContent"></div>
+    </div>
+
+    <button id="fullscreenBtn" title="Toggle Fullscreen">
+        <svg viewBox="0 0 24 24">
+            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        </svg>
+    </button>
+    
+    <button id="resetBtn" title="Reset View" class="icon-button reset-btn">
+        <img id="resetIcon" src="media/Reset_default.png" alt="Reset">
+    </button>
+    
+    <button id="techSpecBtn" title="Technical Specifications" class="icon-button techspec-btn">
+        <img id="techSpecIcon" src="media/spec_default.png" alt="Tech Specs">
+    </button>
+    
+
+
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+        import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+        import { Mesh } from 'three';
+        
+
+
+
+        class HotspotManager {
+            constructor() {
+                this.init();
+                this.hotspots = [];
+                this.hotspotsData = null;
+                this.selectedHotspot = null;
+            }
+
+            async init() {
+                console.log('Initializing...');
+                // Create scene
+                this.scene = new THREE.Scene();
+                //this.scene.background = new THREE.Color(0xf0f0f0);
+                const rgbeLoader = new RGBELoader();
+                rgbeLoader.load('media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/venice_sunset_1k.hdr', (hdrTexture) => {
+                        hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+                        this.scene.environment = hdrTexture;
+                        //this.scene.background = hdrTexture;
+                    });
+
+                
+
+                const bgLoader = new THREE.TextureLoader();
+                bgLoader.load('media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/bg_90DDC087_903D_26CF_41D4_63867E2E241A.jpg', (bgTexture) => {
+                    this.scene.background = bgTexture; // ✅ visible background
+                });
+
+                // Create camera
+                this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0,0, 0);
+                this.camera.lookAt(0, 0, 0); 
+
+                // Create renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                document.getElementById('container').appendChild(this.renderer.domElement);
+
+                // 🔆 Enable tone mapping and adjust exposure
+                this.renderer.toneMapping = THREE.LinearToneMapping; // or THREE.ReinhardToneMapping
+                this.renderer.toneMappingExposure = 1.0; // adjust brightness here (try 1.2–2.0)
+                this.renderer.outputEncoding = THREE.sRGBEncoding;
+
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(5, 5, 5);
+                directionalLight.castShadow = true;
+                this.scene.add(directionalLight);
+
+                // Add a test cube
+                // const geometry = new THREE.BoxGeometry(1, 1, 1);
+                // const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+                // const cube = new THREE.Mesh(geometry, material);
+                // this.scene.add(cube);
+                // console.log('Added test cube');
+
+                // Add controls
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+
+                // Setup loaders
+                this.setupLoaders();
+
+                try {
+                    // Load model and hotspots
+                    console.log('Loading model...');
+                    await this.loadModel();
+                    console.log('Model loaded successfully');
+                } catch (error) {
+                    console.error('Error during initialization:', error);
+                    document.getElementById('loadingScreen').innerHTML = `
+                        <div class="loading-content">
+                            <h2>Error Loading Model</h2>
+                            <p>${error.message}</p>
+                            <p>Please ensure the model file 'scene.glb' is in the correct location.</p>
+                        </div>
+                    `;
+                }
+                window.addEventListener('orientationchange', () => {
+                    this.onWindowResize();
+                    setTimeout(() => this.onWindowResize(), 500); // double fire for safety
+                });
+                // Add event listeners
+                window.addEventListener('resize', this.onWindowResize.bind(this));
+                this.setupFullscreenButton();
+                this.setupTechSpecToggle();
+                this.setupResetButton();
+                
+
+                // Start animation loop
+                this.animate();
+                console.log('Initialization complete');
+            }
+
+            setupLoaders() {
+                // Setup DRACO loader
+                const dracoLoader = new DRACOLoader();
+                dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
+                // Setup GLTF loader
+                this.loader = new GLTFLoader();
+                this.loader.setDRACOLoader(dracoLoader);
+            }
+
+            async loadModel() {
+                return new Promise((resolve, reject) => {
+                    // Create loading manager first
+                    const loadingManager = new THREE.LoadingManager();
+                    
+                    // Setup loading manager callbacks
+                    loadingManager.onProgress = (url, loaded, total) => {
+                        const progress = (loaded / total) * 100;
+                        document.getElementById('progress').style.width = progress + '%';
+                        console.log(`Loading progress: ${progress}%`);
+                    };
+
+                    loadingManager.onLoad = () => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        resolve();
+                    };
+
+                    loadingManager.onError = (url) => {
+                        console.error('Error loading:', url);
+                        reject(new Error(`Failed to load: ${url}`));
+                    };
+
+                    // Create a new GLTFLoader with the loading manager
+                    this.loader = new GLTFLoader(loadingManager);
+                    
+                    // Setup DRACO decoder
+                    const dracoLoader = new DRACOLoader();
+                    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+                    this.loader.setDRACOLoader(dracoLoader);
+                    
+                    const modelPath = 'media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/scene2.glb';
+                    console.log('Loading model from:', modelPath);
+
+                    this.loader.load(
+                        modelPath,
+                        (gltf) => {
+                            console.log('Model loaded successfully');
+                            
+                            console.log("🔍 Checking material variants...");
+                            // ✅ Get global variant list
+                            
+
+                            this.model = gltf.scene;
+                            this.gltf = gltf; 
+
+                            this.cameras = {};
+                        gltf.scene.traverse(obj => {
+                            if (obj.isCamera && obj.name.startsWith("Cam_")) {
+                                const key = obj.name.replace("Cam_", ""); // Extract variant name
+                                this.cameras[key] = obj;
+                                console.log(`📸 Found camera: ${obj.name}`);
+                            }
+                        });
+                            // ✅ Get global variant list
+                            const variantExtension = gltf.parser.json.extensions?.KHR_materials_variants;
+                            if (variantExtension && variantExtension.variants) {
+                                this.variantList = variantExtension.variants.map(v => v.name);
+                                console.log('✅ Material Variants Found:', this.variantList);
+                            }
+
+                            // Log all nodes in the model with their positions
+                            console.log('=== Available Nodes in Model ===');
+                            const nodePositions = {};
+                            const targetNodes = ['Main_FrontView', 'Main_RearView', 'Main_LeftView', 'Main_RightView', '01_ChargingSocket'];
+                           
+                            
+                            this.model.traverse((node) => {
+                                if (node.isMesh || node.isObject3D) {
+                                    const position = new THREE.Vector3();
+                                    node.getWorldPosition(position);
+                                    nodePositions[node.name] = {
+                                        name: node.name,
+                                        type: node.type,
+                                        position: position
+                                    };
+                                    
+                                    // Log all nodes
+                                    console.log(`Node: "${node.name}" (Type: ${node.type}) Position:`, position);
+                                    
+                                    // Specifically log target nodes if found
+                                    if (targetNodes.includes(node.name)) {
+                                        console.log('Found target node:', {
+                                            name: node.name,
+                                            position: position
+                                        });
+                                    }
+                                }
+                            });
+                            
+                            // Log summary of target nodes
+                            console.log('=== Target Nodes Summary ===');
+                            targetNodes.forEach(nodeName => {
+                                if (nodePositions[nodeName]) {
+                                    console.log(`Found ${nodeName}:`, nodePositions[nodeName]);
+                                } else {
+                                    console.log(`Node ${nodeName} not found in model`);
+                                }
+                            });
+                            console.log('============================');
+                            
+                            this.scene.add(this.model);
+                            
+                            // Center model
+                            const box = new THREE.Box3().setFromObject(this.model);
+                            const center = box.getCenter(new THREE.Vector3());
+                            this.model.position.sub(center);
+
+                            // 180 degrees in radians
+                            this.model.rotation.y = Math.PI;
+                            
+                            
+                            // Store model dimensions for positioning hotspots
+                            const size = box.getSize(new THREE.Vector3());
+                            this.modelSize = size;
+                            
+                            // Adjust camera
+                            const maxDim = Math.max(size.x, size.y, size.z);
+                            const fov = this.camera.fov * (Math.PI / 180);
+                            let cameraZ = Math.abs(maxDim / Math.tan(fov / 2));
+                            this.camera.position.set(0, 0, cameraZ * -1);
+                            this.camera.lookAt(0, 0, 0);
+                            this.camera.updateProjectionMatrix();
+                            this.initialCameraPosition = new THREE.Vector3(0, 0, cameraZ * -1);
+                            this.initialCameraTarget = new THREE.Vector3(0, 0, 0);
+                            // Create hotspots after model is loaded
+                            this.createDefaultHotspots();
+                            
+                            resolve();
+                        },
+                        (xhr) => {
+                            const percent = xhr.loaded / xhr.total * 100;
+                            console.log(percent + '% loaded');
+                            document.getElementById('progress').style.width = percent + '%';
+                        },
+                        (error) => {
+                            console.error('Error loading model:', error);
+                            reject(error);
+                        }
+                    );
+                });
+            }
+            
+
+            async createDefaultHotspots() {
+                const response = await fetch('hotspots.json');
+                const hotspotDataList = await response.json();
+
+                hotspotDataList.forEach(hotspotData => {
+                    const node = this.model.getObjectByName(hotspotData.node);
+
+                    // Fallback: find any node that starts with the name (e.g., "01_HydraulicFuse.001")
+                    if (!node) {
+                        this.model.traverse(child => {
+                            if (!node && child.name.startsWith(hotspotData.node)) {
+                                node = child;
+                            }
+                        });
+                    }
+
+                    if (!node) {
+                        console.warn(`❌ Could not find node for: ${hotspotData.node}`);
+                        return;
+                    }
+
+                    const worldPosition = new THREE.Vector3();
+                    node.getWorldPosition(worldPosition);
+
+                    const hotspotDiv = document.createElement('div');
+                    hotspotDiv.className = 'hotspot';
+                    hotspotDiv.style.backgroundImage = `url('media/Info_Default.png')`;
+                    document.body.appendChild(hotspotDiv);
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'hotspot-info';
+                    //infoDiv.textContent = `${hotspotData.title} - ${hotspotData.description}`;
+                    infoDiv.innerHTML = `
+                        <div class="hotspot-title">${hotspotData.title}</div>
+                        <div class="hotspot-description">${hotspotData.description}</div>
+                    `;
+                    document.body.appendChild(infoDiv);
+
+                    const geometry = new THREE.SphereGeometry(0.01);
+                    const material = new THREE.MeshBasicMaterial({ visible: false });
+                    const hotspotMesh = new THREE.Mesh(geometry, material);
+                    hotspotMesh.position.copy(worldPosition);
+                    this.scene.add(hotspotMesh);
+
+                    const hotspot = {
+                        element: hotspotDiv,
+                        info: infoDiv,
+                        data: hotspotData,
+                        mesh: hotspotMesh
+                    };
+
+                    this.hotspots.push(hotspot);
+
+                    // Track clicked hotspots globally
+                    if (!this.visitedHotspots) {
+                        this.visitedHotspots = new Set();
+                    }
+
+                 
+                    hotspotDiv.addEventListener('click', () => {
+                        console.log('Hotspot clicked:', hotspotData.title);
+
+                        if (this.selectedHotspot && this.selectedHotspot !== hotspot) {
+                            this.visitedHotspots.add(this.selectedHotspot);
+                            this.selectedHotspot.element.style.backgroundImage = `url('media/Info_Visited.png')`;
+                            this.selectedHotspot.info.style.display = 'none';
+                            this.selectedHotspot.info.classList.remove('active');
+                        }
+
+                        this.selectedHotspot = hotspot;
+                        this.visitedHotspots.add(hotspot);
+                        hotspotDiv.style.backgroundImage = `url('media/Info_Selected.png')`;
+                        infoDiv.style.display = 'block';
+                        infoDiv.classList.add('active');
+
+                        // 🔁 Apply material variant
+                        this.applyMaterialVariant(hotspotData.node);
+
+                        // 📷 Move camera to predefined camera position if available
+                        const cameraNode = this.gltf.scene.getObjectByName('Cam' + hotspotData.node);
+                        if (cameraNode && cameraNode.isCamera) {
+                            const startPos = this.camera.position.clone();
+                            const startQuat = this.camera.quaternion.clone();
+
+                            const endPos = cameraNode.position.clone();
+                            const target = new THREE.Vector3();
+                            cameraNode.getWorldDirection(target);
+                            target.add(endPos);
+
+                            const lookAtMatrix = new THREE.Matrix4().lookAt(endPos, target, new THREE.Vector3(0, 1, 0));
+                            const endQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMatrix);
+
+                            const duration = 1500;
+                            const startTime = Date.now();
+
+                            const animate = () => {
+                                const elapsed = Date.now() - startTime;
+                                const t = Math.min(elapsed / duration, 1);
+                                const ease = 1 - Math.pow(1 - t, 4);
+
+                                this.camera.position.lerpVectors(startPos, endPos, ease);
+                                this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
+                                this.controls.target.lerpVectors(this.controls.target, target, ease);
+                                this.controls.update();
+
+                                if (t < 1) requestAnimationFrame(animate);
+                            };
+
+                            animate();
+                        } else {
+                            // fallback: orbit to hotspot
+                            this.moveToHotspotView(hotspot);
+                        }
+                    });
+
+
+                    hotspotDiv.addEventListener('mouseenter', () => {
+                        if (this.selectedHotspot !== hotspot) {
+                            hotspotDiv.style.backgroundImage = `url('media/Info_Selected.png')`;
+                        }
+                        //infoDiv.style.display = 'block';
+                        
+                        //infoDiv.classList.remove('active'); // show only title
+                        infoDiv.style.display = 'block';
+                        if (this.selectedHotspot === hotspot) {
+                            infoDiv.classList.add('active'); // show description if already selected
+                        }else {
+                            infoDiv.classList.remove('active'); // show only title
+                        }
+                    });
+
+                    hotspotDiv.addEventListener('mouseleave', () => {
+                        // Restore correct image based on status
+                        if (this.selectedHotspot === hotspot) {
+                            hotspotDiv.style.backgroundImage = `url('media/Info_Selected.png')`;
+                        } else if (this.visitedHotspots.has(hotspot)) {
+                            hotspotDiv.style.backgroundImage = `url('media/Info_Visited.png')`;
+                        } else {
+                            hotspotDiv.style.backgroundImage = `url('media/Info_Default.png')`;
+                        }
+
+                        if (this.selectedHotspot !== hotspot) {
+                            infoDiv.style.display = 'none';
+                        }
+                    });
+
+
+
+                });
+            }
+
+            switchToNamedCamera(cameraName) {
+                const camNode = this.namedCameras?.[cameraName];
+                if (!camNode) {
+                    console.warn(`Camera '${cameraName}' not found.`);
+                    return;
+                }
+
+                const startPos = this.camera.position.clone();
+                const startQuat = this.camera.quaternion.clone();
+                const targetPos = camNode.position.clone();
+                const targetQuat = camNode.quaternion.clone();
+
+                const startTime = Date.now();
+                const duration = 1500;
+
+                const animateSwitch = () => {
+                    const elapsed = Date.now() - startTime;
+                    const t = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - t, 4);
+
+                    this.camera.position.lerpVectors(startPos, targetPos, ease);
+                    this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
+
+                    this.controls.target.set(0, 0, 0); // optionally modify
+                    this.controls.update();
+
+                    if (t < 1) requestAnimationFrame(animateSwitch);
+                };
+
+                animateSwitch();
+            }
+
+            applyMaterialVariant(variantName) {
+                if (!this.gltf || !variantName) return;
+
+                const variantDefs = this.gltf.parser.json.extensions?.KHR_materials_variants?.variants;
+                const variantIndex = variantDefs?.findIndex(v => v.name === variantName);
+
+                if (variantIndex === -1 || variantIndex === undefined) {
+                    console.warn('❌ Variant not found:', variantName);
+                    return;
+                }
+
+                this.model.traverse((object) => {
+                    const ext = object.userData?.gltfExtensions?.KHR_materials_variants;
+                    if (!object.isMesh || !ext || !ext.mappings) return;
+
+                    const mapping = ext.mappings.find(m => m.variants.includes(variantIndex));
+                    if (mapping && mapping.material !== undefined) {
+                        this.gltf.parser.getDependency('material', mapping.material).then((newMat) => {
+                            object.material = newMat;
+                            object.material.needsUpdate = true;
+                        });
+                    }
+                });
+
+                console.log(`🎨 Applied variant: ${variantName}`);
+            }
+
+
+            moveToHotspotView(hotspot) {
+                const camNodeName = `Cam_${hotspot.data.node}`;
+                const camNode = this.model.getObjectByName(camNodeName);
+
+                if (camNode && camNode.isObject3D) {
+                    const endPos = new THREE.Vector3();
+                    camNode.getWorldPosition(endPos);
+
+                    const endTarget = new THREE.Vector3();
+                    const forward = new THREE.Vector3();
+                    camNode.getWorldDirection(forward);
+                    endTarget.copy(endPos).add(forward);
+
+                    const startPos = this.camera.position.clone();
+                    const startQuat = this.camera.quaternion.clone();
+
+                    const targetQuat = new THREE.Quaternion();
+                    const lookAtMatrix = new THREE.Matrix4().lookAt(endPos, endTarget, new THREE.Vector3(0, 1, 0));
+                    targetQuat.setFromRotationMatrix(lookAtMatrix);
+
+                    const startTarget = this.controls.target.clone();
+
+                    const duration = 1500;
+                    const startTime = Date.now();
+
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const t = Math.min(elapsed / duration, 1);
+                        const ease = 1 - Math.pow(1 - t, 4);
+
+                        this.camera.position.lerpVectors(startPos, endPos, ease);
+                        this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
+                        this.controls.target.lerpVectors(startTarget, endTarget, ease);
+                        this.controls.update();
+
+                        if (t < 1) {
+                            requestAnimationFrame(animate);
+                        }
+                    };
+
+                    animate();
+                } else {
+                    console.warn(`❌ No camera node found for: ${camNodeName}`);
+                }
+            }
+
+
+            updateHotspotPositions() {
+                if (!this.hotspots) return;
+                
+                this.hotspots.forEach(hotspot => {
+                    // Get the world position of the hotspot mesh
+                    const worldPosition = new THREE.Vector3();
+                    hotspot.mesh.getWorldPosition(worldPosition);
+                    
+                    // Project the world position to screen coordinates
+                    const screenPosition = worldPosition.clone().project(this.camera);
+                    
+                    // Check if the point is in front of the camera and within view bounds
+                    const isBehindCamera = screenPosition.z > 1;
+                    const isInView = screenPosition.x >= -1 && screenPosition.x <= 1 && 
+                                   screenPosition.y >= -1 && screenPosition.y <= 1;
+
+                    // Convert to screen coordinates
+                    const x = (screenPosition.x + 1) * window.innerWidth / 2;
+                    const y = (-screenPosition.y + 1) * window.innerHeight / 2;
+
+                    // Perform raycasting to check if hotspot is behind objects
+                    const raycaster = new THREE.Raycaster();
+                    const direction = worldPosition.clone().sub(this.camera.position).normalize();
+                    raycaster.set(this.camera.position, direction);
+                    
+                    // Get all intersections between camera and hotspot position
+                    const intersects = raycaster.intersectObjects(this.scene.children, true);
+                    
+                    // Calculate distance to hotspot
+                    const distanceToHotspot = this.camera.position.distanceTo(worldPosition);
+                    
+                    // Check if hotspot is occluded by comparing distances
+                    const isOccluded = intersects.length > 0 && intersects[0].distance < distanceToHotspot - 0.1;
+
+                    // Update visibility based on all conditions
+                    if (isBehindCamera || !isInView || isOccluded) {
+                        hotspot.element.style.display = 'none';
+                        hotspot.info.style.display = 'none';
+                    } else {
+                        hotspot.element.style.display = 'block';
+                        // Only show info if hovering
+                        if (hotspot.element.matches(':hover')) {
+                            hotspot.info.style.display = 'block';
+                        }
+                    }
+
+                    // Update positions immediately without smoothing
+                    hotspot.element.style.left = `${x}px`;
+                    hotspot.element.style.top = `${y}px`;
+                    hotspot.info.style.left = `${x + 20}px`;
+                    hotspot.info.style.top = `${y}px`;
+                });
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            setupFullscreenButton() {
+                const button = document.getElementById('fullscreenBtn');
+                button.addEventListener('click', () => {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                });
+            }
+
+            setupResetButton() {
+                const button = document.getElementById('resetBtn');
+                const icon = document.getElementById('resetIcon');
+
+                button.addEventListener('click', () => {
+                    console.log('🔄 Resetting view...');
+
+                    // Reset camera to stored position & look at
+                    const startPos = this.camera.position.clone();
+                    const startQuat = this.camera.quaternion.clone();
+                    const targetPos = this.initialCameraPosition.clone();
+                    const targetTarget = this.initialCameraTarget.clone();
+
+                    const targetQuat = new THREE.Quaternion();
+                    const lookAtMatrix = new THREE.Matrix4().lookAt(targetPos, targetTarget, new THREE.Vector3(0, 1, 0));
+                    targetQuat.setFromRotationMatrix(lookAtMatrix);
+
+                    const startTime = Date.now();
+                    const duration = 2000;
+
+                    const animateReset = () => {
+                        const elapsed = Date.now() - startTime;
+                        const t = Math.min(elapsed / duration, 1);
+                        const ease = 1 - Math.pow(1 - t, 4);
+
+                        this.camera.position.lerpVectors(startPos, targetPos, ease);
+                        this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
+                        this.controls.target.lerpVectors(this.controls.target, targetTarget, ease);
+                        this.controls.update();
+
+                        if (t < 1) requestAnimationFrame(animateReset);
+                    };
+
+                    animateReset();
+
+                    // Reset material variant
+                    this.applyMaterialVariant('00_Default');
+
+                    // Hide any open callout
+                    if (this.selectedHotspot) {
+                        this.selectedHotspot.info.classList.remove('active');
+                        this.selectedHotspot.info.style.display = 'none';
+                        this.selectedHotspot.element.style.backgroundImage = `url('media/Info_Visited.png')`;
+                        this.selectedHotspot = null;
+                    }
+
+                    // Reset button icon after click
+                    setTimeout(() => {
+                        icon.src = 'media/reset_default.png';
+                    }, 150);
+                });
+
+                button.addEventListener('mouseenter', () => {
+                    icon.src = 'media/reset_active.png';
+                });
+
+                button.addEventListener('mouseleave', () => {
+                    icon.src = 'media/reset_default.png';
+                });
+            }
+
+            setupTechSpecToggle() {
+                const button = document.getElementById('techSpecBtn');
+                const icon = document.getElementById('techSpecIcon');
+                const modal = document.getElementById('specModal');
+                const content = document.getElementById('specContent');
+                const closeIcon = document.getElementById('closeSpecIcon');
+
+                // Track toggle state
+                let isVisible = false;
+
+                const showSpecs = async () => {
+                    try {
+                        const response = await fetch('specs.json');
+                        const specs = await response.json();
+                        content.innerHTML = '';
+
+                        for (const key in specs) {
+                            const row = document.createElement('p');
+                            row.innerHTML = `<strong>${key}:</strong> ${specs[key]}`;
+                            content.appendChild(row);
+                        }
+
+                        modal.style.display = 'block';
+                        icon.src = 'media/spec_active.png';
+                        isVisible = true;
+                    } catch (err) {
+                        content.innerHTML = '<p>Error loading specs.</p>';
+                        modal.style.display = 'block';
+                        icon.src = 'media/spec_active.png';
+                        isVisible = true;
+                        console.error(err);
+                    }
+                };
+
+                const hideSpecs = () => {
+                    modal.style.display = 'none';
+                    icon.src = 'media/spec_default.png';
+                    isVisible = false;
+                };
+
+                button.addEventListener('click', () => {
+                    if (isVisible) {
+                        hideSpecs();
+                    } else {
+                        showSpecs();
+                    }
+                });
+
+                closeIcon.addEventListener('click', hideSpecs);
+
+                button.addEventListener('mouseenter', () => {
+                    if (!isVisible) icon.src = 'media/spec_active.png';
+                });
+
+                button.addEventListener('mouseleave', () => {
+                    if (!isVisible) icon.src = 'media/spec_default.png';
+                });
+            }
+
+
+            
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                this.controls.update();
+                this.updateHotspotPositions();
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Initialize the application
+        new HotspotManager();
+    </script>
+</body>
+</html>
