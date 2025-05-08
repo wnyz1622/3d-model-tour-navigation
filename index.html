@@ -223,13 +223,13 @@
                             this.gltf = gltf; 
 
                             this.cameras = {};
-                        gltf.scene.traverse(obj => {
-                            if (obj.isCamera && obj.name.startsWith("Cam_")) {
-                                const key = obj.name.replace("Cam_", ""); // Extract variant name
-                                this.cameras[key] = obj;
-                                console.log(`📸 Found camera: ${obj.name}`);
-                            }
-                        });
+                            gltf.scene.traverse(obj => {
+                                if (obj.isCamera && obj.name.startsWith("Cam_")) {
+                                    const key = obj.name.replace("Cam_", ""); // Extract variant name
+                                    this.cameras[key] = obj;
+                                    console.log(`📸 Found camera: ${obj.name}`);
+                                }
+                            });
                             // ✅ Get global variant list
                             const variantExtension = gltf.parser.json.extensions?.KHR_materials_variants;
                             if (variantExtension && variantExtension.variants) {
