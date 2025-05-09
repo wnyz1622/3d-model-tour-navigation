@@ -81,7 +81,7 @@
                 this.scene = new THREE.Scene();
                 //this.scene.background = new THREE.Color(0xf0f0f0);
                 const rgbeLoader = new RGBELoader();
-                rgbeLoader.load('media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/venice_sunset_1k.hdr', (hdrTexture) => {
+                rgbeLoader.load('media/model/cannon_1k.hdr', (hdrTexture) => {
                         hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
                         this.scene.environment = hdrTexture;
                         //this.scene.background = hdrTexture;
@@ -90,7 +90,7 @@
                 
 
                 const bgLoader = new THREE.TextureLoader();
-                bgLoader.load('media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/bg_90DDC087_903D_26CF_41D4_63867E2E241A.jpg', (bgTexture) => {
+                bgLoader.load('media/model/bg_90DDC087_903D_26CF_41D4_63867E2E241A.jpg', (bgTexture) => {
                     this.scene.background = bgTexture; // ✅ visible background
                 });
 
@@ -207,7 +207,7 @@
                     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                     this.loader.setDRACOLoader(dracoLoader);
                     
-                    const modelPath = 'media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/scene2.glb';
+                    const modelPath = 'media/model/scene.glb';
                     console.log('Loading model from:', modelPath);
 
                     this.loader.load(
