@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Axle Jack 3D Tour</title>
+    <title>Dokasch Opticooler RKN 3D Tour</title>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
           <img src="media/logo.png" alt="Logo" class="logo">
         </div>
     </header>
-    <div id="modelTitle">65 Ton Floating Auto-Retract Axle Jack</div>
+    <div id="modelTitle">Dokasch Opticooler RKN</div>
     <div id="container"></div>
     
     <div id="loadingScreen" class="loading-screen">
@@ -71,6 +71,8 @@
             constructor() {
                 this.init();
                 this.hotspots = [];
+                this.doorAnimations = {};
+                this.doorHotspots = [];
                 this.hotspotsData = null;
                 this.selectedHotspot = null;
             }
@@ -81,7 +83,7 @@
                 this.scene = new THREE.Scene();
                 //this.scene.background = new THREE.Color(0xf0f0f0);
                 const rgbeLoader = new RGBELoader();
-                rgbeLoader.load('media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/venice_sunset_1k.hdr', (hdrTexture) => {
+                rgbeLoader.load('media/model/cannon_1k.hdr', (hdrTexture) => {
                         hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
                         this.scene.environment = hdrTexture;
                         //this.scene.background = hdrTexture;
@@ -90,7 +92,7 @@
                 
 
                 const bgLoader = new THREE.TextureLoader();
-                bgLoader.load('media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/bg_90DDC087_903D_26CF_41D4_63867E2E241A.jpg', (bgTexture) => {
+                bgLoader.load('media/model/bg_90DDC087_903D_26CF_41D4_63867E2E241A.jpg', (bgTexture) => {
                     this.scene.background = bgTexture; // ✅ visible background
                 });
 
@@ -163,6 +165,7 @@
                 
 
                 // Start animation loop
+                this.clock = new THREE.Clock();
                 this.animate();
                 console.log('Initialization complete');
             }
@@ -207,9 +210,10 @@
                     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                     this.loader.setDRACOLoader(dracoLoader);
                     
-                    const modelPath = 'media/model_09ED898D_AA7F_9102_41C7_9AC35F948DDA/scene2.glb';
+                    const modelPath = 'media/model/scene.glb';
                     console.log('Loading model from:', modelPath);
-
+                    
+                
                     this.loader.load(
                         modelPath,
                         (gltf) => {
@@ -220,7 +224,36 @@
                             
 
                             this.model = gltf.scene;
-                            this.gltf = gltf; 
+                            // Store meshIndex for each mesh so we can reference default material later
+                            gltf.scene.traverse((obj) => {
+                                if (obj.isMesh) {
+                                    if (gltf.parser.json.meshes) {
+                                        const meshDefIndex = gltf.parser.json.meshes.findIndex(mesh => mesh.name === obj.name);
+                                        if (meshDefIndex !== -1) {
+                                            obj.userData.meshIndex = meshDefIndex;
+                                        }
+                                    }
+                                }
+                            });
+
+                            this.gltf = gltf;
+                            
+                            //hide object after load
+                            this.cableContentsObject = this.model.getObjectByName("CableBinContents");
+                            if (this.cableContentsObject) {
+                                this.cableContentsObject.visible = false;
+                            }
+
+                            // Setup animation mixer and register animations
+                            this.mixer = new THREE.AnimationMixer(this.model);
+                            this.animationMixers = {};
+                            this.animationsByName = {};
+
+                            gltf.animations.forEach((clip) => {
+                                this.animationMixers[clip.name] = this.mixer;
+                                this.animationsByName[clip.name] = clip;
+                                console.log(`🎞️ Loaded animation: ${clip.name}`);
+                            });
 
                             this.cameras = {};
                             gltf.scene.traverse(obj => {
@@ -296,10 +329,10 @@
                             const maxDim = Math.max(size.x, size.y, size.z);
                             const fov = this.camera.fov * (Math.PI / 180);
                             let cameraZ = Math.abs(maxDim / Math.tan(fov / 2));
-                            this.camera.position.set(0, 0, cameraZ * -1);
+                            this.camera.position.set(0, 0, cameraZ * 1);
                             this.camera.lookAt(0, 0, 0);
                             this.camera.updateProjectionMatrix();
-                            this.initialCameraPosition = new THREE.Vector3(0, 0, cameraZ * -1);
+                            this.initialCameraPosition = new THREE.Vector3(0, 0, cameraZ * 1);
                             this.initialCameraTarget = new THREE.Vector3(0, 0, 0);
                             // Create hotspots after model is loaded
                             this.createDefaultHotspots();
@@ -318,14 +351,45 @@
             }
             
 
+
+            clearAllVariants() {
+                if (!this.gltf) return;
+
+                this.model.traverse((object) => {
+                    if (!object.isMesh) return;
+
+                    const ext = object.userData?.gltfExtensions?.KHR_materials_variants;
+
+                    if (ext?.mappings?.length) {
+                        // Find the fallback/default material from the GLTF definition
+                        const meshIndex = object.userData.meshIndex;
+                        if (meshIndex !== undefined) {
+                            const meshDef = this.gltf.parser.json.meshes[meshIndex];
+                            const primitive = meshDef?.primitives?.[0];
+
+                            if (primitive?.material !== undefined) {
+                                this.gltf.parser.getDependency('material', primitive.material).then((defaultMat) => {
+                                    object.material = defaultMat;
+                                    object.material.needsUpdate = true;
+                                });
+                            }
+                        }
+                    }
+                });
+
+                console.log('🔁 Reset all materials to their base (default) version');
+            }
+
+
             async createDefaultHotspots() {
+                
                 const response = await fetch('hotspots.json');
                 const hotspotDataList = await response.json();
 
                 hotspotDataList.forEach(hotspotData => {
-                    const node = this.model.getObjectByName(hotspotData.node);
+                    let node = this.model.getObjectByName(hotspotData.node);
 
-                    // Fallback: find any node that starts with the name (e.g., "01_HydraulicFuse.001")
+
                     if (!node) {
                         this.model.traverse(child => {
                             if (!node && child.name.startsWith(hotspotData.node)) {
@@ -344,12 +408,13 @@
 
                     const hotspotDiv = document.createElement('div');
                     hotspotDiv.className = 'hotspot';
-                    hotspotDiv.style.backgroundImage = `url('media/Info_Default.png')`;
+                    hotspotDiv.style.backgroundImage = hotspotData.type === 'animation' 
+                        ? `url('media/door_default.png')` 
+                        : `url('media/Info_Default.png')`;
                     document.body.appendChild(hotspotDiv);
 
                     const infoDiv = document.createElement('div');
                     infoDiv.className = 'hotspot-info';
-                    //infoDiv.textContent = `${hotspotData.title} - ${hotspotData.description}`;
                     infoDiv.innerHTML = `
                         <div class="hotspot-title">${hotspotData.title}</div>
                         <div class="hotspot-description">${hotspotData.description}</div>
@@ -371,44 +436,50 @@
 
                     this.hotspots.push(hotspot);
 
-                    // Track clicked hotspots globally
                     if (!this.visitedHotspots) {
                         this.visitedHotspots = new Set();
                     }
 
-                 
                     hotspotDiv.addEventListener('click', () => {
                         console.log('Hotspot clicked:', hotspotData.title);
 
                         if (this.selectedHotspot && this.selectedHotspot !== hotspot) {
                             this.visitedHotspots.add(this.selectedHotspot);
-                            this.selectedHotspot.element.style.backgroundImage = `url('media/Info_Visited.png')`;
+                            this.selectedHotspot.element.style.backgroundImage =
+                                this.selectedHotspot.data.type === 'animation' ?
+                                `url('media/door_visited.png')` :
+                                `url('media/Info_Visited.png')`;
                             this.selectedHotspot.info.style.display = 'none';
                             this.selectedHotspot.info.classList.remove('active');
                         }
 
                         this.selectedHotspot = hotspot;
                         this.visitedHotspots.add(hotspot);
-                        hotspotDiv.style.backgroundImage = `url('media/Info_Selected.png')`;
+                        hotspotDiv.style.backgroundImage = hotspotData.type === 'animation'
+                            ? `url('media/door_selected.png')`
+                            : `url('media/Info_Selected.png')`;
+
                         infoDiv.style.display = 'block';
                         infoDiv.classList.add('active');
-
-                        // 🔁 Apply material variant
                         this.applyMaterialVariant(hotspotData.node);
 
                         // 📷 Move camera to predefined camera position if available
-                        const cameraNode = this.gltf.scene.getObjectByName('Cam' + hotspotData.node);
+                        const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
                         if (cameraNode && cameraNode.isCamera) {
+                            const endPos = new THREE.Vector3();
+                            cameraNode.getWorldPosition(endPos);
+
+                            const endQuat = new THREE.Quaternion();
+                            cameraNode.getWorldQuaternion(endQuat);
+
                             const startPos = this.camera.position.clone();
                             const startQuat = this.camera.quaternion.clone();
 
-                            const endPos = cameraNode.position.clone();
-                            const target = new THREE.Vector3();
-                            cameraNode.getWorldDirection(target);
-                            target.add(endPos);
+                            const startTarget = this.controls.target.clone();
 
-                            const lookAtMatrix = new THREE.Matrix4().lookAt(endPos, target, new THREE.Vector3(0, 1, 0));
-                            const endQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMatrix);
+                            // Use quaternion to derive forward vector
+                            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
+                            const target = endPos.clone().add(forward);
 
                             const duration = 1500;
                             const startTime = Date.now();
@@ -420,52 +491,116 @@
 
                                 this.camera.position.lerpVectors(startPos, endPos, ease);
                                 this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
-                                this.controls.target.lerpVectors(this.controls.target, target, ease);
+                                this.controls.target.lerpVectors(startTarget, target, ease);
                                 this.controls.update();
 
                                 if (t < 1) requestAnimationFrame(animate);
                             };
 
                             animate();
+
                         } else {
                             // fallback: orbit to hotspot
                             this.moveToHotspotView(hotspot);
                         }
-                    });
+                        
 
+                        if (hotspotData.type === "animation" && hotspotData.animation) {
+                            hotspotDiv.style.backgroundImage = `url('media/Door_Selected.png')`;
+
+                            // ✅ Clear all material variants
+                            this.clearAllVariants(); 
+
+                            // Support multiple animations separated by comma
+                            const animationNames = hotspotData.animation.split(',').map(name => name.trim());
+
+                            if (!hotspot._direction) hotspot._direction = 1;
+                            else hotspot._direction *= -1;
+
+                            animationNames.forEach(animName => {
+                                const clip = this.animationsByName[animName];
+                                const mixer = this.animationMixers[animName];
+
+                                if (!clip || !mixer) {
+                                    console.warn(`⚠️ Missing clip or mixer for: ${animName}`);
+                                    return;
+                                }
+
+                                let action = mixer.existingAction(clip);
+                                if (!action) action = mixer.clipAction(clip);
+
+                                action.setLoop(THREE.LoopOnce);
+                                action.clampWhenFinished = true;
+                                action.timeScale = hotspot._direction;
+
+                                if (hotspot._direction === -1) {
+                                    action.paused = false;
+                                    action.time = clip.duration;
+                                } else {
+                                    action.reset();
+                                }
+
+                                action.play();
+
+                                //show object after animation play with a deal
+                                if (clip.name === "DoorOpen_CableBin" && this.cableContentsObject) {
+                                    // Clear any existing timeout to prevent overlapping
+                                        clearTimeout(this._cableShowTimeout);
+
+                                    if (hotspot._direction === 1) {
+                                        // Forward: delay 60 frames (~1000ms)
+                                        this._cableShowTimeout = setTimeout(() => {
+                                            this.cableContentsObject.visible = true;
+                                        }, 1500);
+                                    } else {
+                                        // Reverse: hide immediately
+                                        this.cableContentsObject.visible = false;
+                                    }
+                                }
+                                
+
+                                console.log(`🎬 ${hotspotData.title} > ${animName} (${hotspot._direction === 1 ? 'forward' : 'reverse'})`);
+                            });
+
+
+                            this.moveToHotspotView(hotspot);
+                        }
+                    });
 
                     hotspotDiv.addEventListener('mouseenter', () => {
                         if (this.selectedHotspot !== hotspot) {
-                            hotspotDiv.style.backgroundImage = `url('media/Info_Selected.png')`;
+                            hotspotDiv.style.backgroundImage = hotspotData.type === "animation"
+                                ? `url('media/door_selected.png')`
+                                : `url('media/Info_Selected.png')`;
                         }
-                        //infoDiv.style.display = 'block';
-                        
-                        //infoDiv.classList.remove('active'); // show only title
+
                         infoDiv.style.display = 'block';
                         if (this.selectedHotspot === hotspot) {
-                            infoDiv.classList.add('active'); // show description if already selected
-                        }else {
-                            infoDiv.classList.remove('active'); // show only title
+                            infoDiv.classList.add('active');
+                        } else {
+                            infoDiv.classList.remove('active');
                         }
                     });
 
                     hotspotDiv.addEventListener('mouseleave', () => {
-                        // Restore correct image based on status
                         if (this.selectedHotspot === hotspot) {
-                            hotspotDiv.style.backgroundImage = `url('media/Info_Selected.png')`;
+                            hotspotDiv.style.backgroundImage = hotspotData.type === "animation"
+                                ? `url('media/door_selected.png')`
+                                : `url('media/Info_Selected.png')`;
                         } else if (this.visitedHotspots.has(hotspot)) {
-                            hotspotDiv.style.backgroundImage = `url('media/Info_Visited.png')`;
+                            hotspotDiv.style.backgroundImage = hotspotData.type === "animation"
+                                ? `url('media/door_visited.png')`
+                                : `url('media/Info_Visited.png')`;
                         } else {
-                            hotspotDiv.style.backgroundImage = `url('media/Info_Default.png')`;
+                            hotspotDiv.style.backgroundImage = hotspotData.type === "animation"
+                                ? `url('media/door_default.png')`
+                                : `url('media/Info_Default.png')`;
                         }
 
                         if (this.selectedHotspot !== hotspot) {
                             infoDiv.style.display = 'none';
                         }
                     });
-
-
-
                 });
             }
 
@@ -528,7 +663,6 @@
                 console.log(`🎨 Applied variant: ${variantName}`);
             }
 
-
             moveToHotspotView(hotspot) {
                 const camNodeName = `Cam_${hotspot.data.node}`;
                 const camNode = this.model.getObjectByName(camNodeName);
@@ -574,7 +708,6 @@
                     console.warn(`❌ No camera node found for: ${camNodeName}`);
                 }
             }
-
 
             updateHotspotPositions() {
                 if (!this.hotspots) return;
@@ -767,14 +900,17 @@
                 });
             }
 
-
-            
-
             animate() {
                 requestAnimationFrame(this.animate.bind(this));
                 this.controls.update();
                 this.updateHotspotPositions();
                 this.renderer.render(this.scene, this.camera);
+
+                if (this.mixer) {
+                    const delta = this.clock.getDelta();
+                    this.mixer.update(delta);
+                }
+
             }
         }
 

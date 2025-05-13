@@ -1,25 +1,13 @@
 {
-    "Model": "Model 65P10AR",
-    "Length": "70” (1778mm)",
-    "Width": "45” (1143mm)",
-    "Height": "34” (864mm)",
-    "Weight": "560 pounds (254 kg)",
-    "Main Landing Gear": "A300, A310, A319, A320, A321, A330, A340-200/300, B707, B717, B720, B727, B737, B747, B757, B767, B787, DC8, DC10, L1011, MD11",
-    "Nose Landing Gear": "A300, A310, A330, A340-200/300, A350, B727, B747, B757, B767, B787, DC10, L1011, MD11",
-    "Rated Capacity": "65 tons (59.0 m. tons)",
-    "Low Height": "10.25 inches (260 mm)",
-    "Hydraulic Lift": "11 inches (279 mm)",
-    "Extension Screw": "4.75 inches (121 mm)",
-    "Total Extended Height": "26 inches (660 mm)",
-    "Base Width": "8.75 inches (222 mm)",
-    "Cylinder Diameter": "8 inches (203 mm)",
-    "Oil Pressure at Rated Capacity": "7000 psig (492 kg/sq cm)",
-    "Safety Pop-off Valve": "68.9 tons (62.5 m. tons)",
-    "Proof Load": "97.5 tons (88.5 m. tons)",
-    "Floor Loading at Rated Capacity": "825 psi (58 kg/sq cm)",
-    "Reservoir Capacity": "5.5 gallons (20.8 liters) Hydraulic Fluid",
-    "Hydraulic Fluid": "MIL-PRF-5606 or equivalent",
-    "Maximum Towing Speed": "5 mph (8 km/h)",
-    "Approximate Jack Net Weight": "500 lbs (227 kg)"
-  }
-  
+  "Set Temperature Range": "+2°C to +30°C / +35.6°F to +86°F",
+  "Ambient Temperature Range": "-30°C to +50°C / -22°F to +122°F",
+  "External Dimensions (L x W x H)": "2,007 x 1,534 x 1,626 mm / 79 x 60.4 x 64 in",
+  "Max Internal Loading Dimensions (L x W x H)": "1,250 x 1,220 x 1,230 mm / 49.2 x 48 x 48.4 in",
+  "Effective Loading Volume": "1.88 m³ / 66.2 cu. ft",
+  "Tare Weight": "670 kg / 1,474 lb",
+  "Gross Weight": "1,588 kg / 3,500 lb",
+  "Max Net Weight": "918 kg / 2,023 lb",
+  "Power Supply": "Operated by 24 V airworthy accumulators, ground systems 110/220 V connectors",
+  "Accumulator Load Time (0–100%)": "Approx. 4 h",
+  "Autonomous Running Time": "Approx. 100 h"
+}

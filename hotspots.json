@@ -1,80 +1,82 @@
 [
   {
-    "node": "01_HydraulicFuse",
-    "title": "Hydraulic Fuse",
-    "camera": "Cam_01_HydraulicFuse",
-    "description": "Hydraulic fuse at the cylinder assembly prevents lowering of load in the event of a hose failure"
+    "node": "01_ChargingSocket",
+    "title": "Charging Socket",
+    "camera": "Cam_01_ChargingSocket",
+    "type": "callout",
+    "description": "This unit provides two charging sockets to charge this unit. It is possible to use just 1 cable or both in parallel (using both is recommended). For example, charging on a single cable from 50% to 100% battery charge takes 4 hours, whereas with both cables it takes 2 hours. Plugging in both cables results in faster charging.\n\nNOTE: When plugging in both cables, use power outlets on separate circuits. Plugging in both cables into the same circuit may result in Amp overload and circuit breaker to trip. Also, make sure to extend cords to their full length to minimize overheating."
   },
   {
-    "node": "02_AirPumpLubricator",
-    "title": "Air PumpLu bricator",
-    "camera": "Cam_02_AirPumpLubricator",
-    "description": "For air operated hydraulic pump"
+    "node": "02_ControlPanel",
+    "title": "Control Panel",
+    "camera": "Cam_02_ControlPanel",
+    "type": "callout",
+    "description": "The control panel displays the unit’s temperature and battery status as well as the unit’s status indicators. Any deviation from a normal operating status, (e.g., a yellow flashing light and/or an alarm) employees should contact the TempControl Tower at 877-525-4628 prior to taking any action."
   },
   {
-    "node": "03_LoadGauge",
-    "title": "Load Gauge",
-    "camera": "Cam_03_LoadGauge",
-    "description": "Load gauge for load indication (reads tons/psig)"
+    "node": "03_CableBin",
+    "title": "Cable Bin",
+    "camera": "Cam_03_CableBin",
+    "type": "callout",
+    "description": "The Cable Bin is outfitted with two charging units and two five-meter-long plug sockets, along with plug-in adapters that enable recharging the internal batteries of the units globally."
   },
   {
-    "node": "04_RainHat",
-    "title": "Rain Hat",
-    "camera": "Cam_04_RainHat",
-    "description": "Side view with storage access."
+    "node": "04_DocumentPouch",
+    "title": "Document Pouch",
+    "camera": "Cam_04_DocumentPouch",
+    "type": "callout",
+    "description": "Document Pouches are used to transport copies of relevant shipment documents.\n\n*Location of the document pouch may vary by manufacture type."
   },
   {
-  "title": "Swivel Caster",
-  "description": "8 inch diameter heavy duty swivel casters with Skydrol resistant tread.",
-  "node": "05_SwivelCaster",
-  "camera": "Cam_05_SwivelCaster"
-},
-{
-  "title": "Dual Handpump Assembly",
-  "description": "Two manual hand pumps (one high pressure, low volume and one low pressure, high volume)",
-  "node": "06_DualHandpumpAssembly",
-  "camera": "Cam_06_DualHandpumpAssembly"
-},
-{
-  "title": "Oil Filter Cap",
-  "description": "With filtered air vent and dipstick",
-   "node": "07_OilFilterCap",
-  "camera": "Cam_07_OilFilterCap"  
-},
-{
-  "title": "Air Valve",
-  "description": "Retracts to full retracted position automatically which provides for removal from under aircraft jack point",
-  "node": "08_AirValve",
-  "camera": "Cam_08_AirValve"  
-},
-{
-  "title": "Floating Cylinder Assembly",
-  "description": "Cylinder assembly allows unit to track arc of landing gear jack point, eliminating excessive side loads on jack and landing gear",
-  "node": "09_FloatingCylinderAssembly",
-  "camera": "Cam_09_FloatingCylinderAssembly"  
-},
-{
-  "title": "Reservoir",
-  "description": "The reservoir stores hydraulic fluid used to operate the jack. It supplies fluid to the pump system and is typically equipped with a fill cap, vent, and dipstick for monitoring fluid levels.",
-  "node": "10_Reservoir",
-  "camera": "Cam_10_Reservoir" 
-},
-{
-  "title": "Front Wheel",
-  "description": "Retractable front wheel with Skydrol resistant tread.",
-  "node": "11_FrontWheel",
-  "camera": "Cam_11_FrontWheel" 
-},
-{
-  "title": "Tow Handle",
-  "description": "3 1/8” Inside Diameter Lunette Eye",
-  "node": "12_TowHandle",
-  "camera": "Cam_12_TowHandle"  
-},
-{
-  "title": "Control Console",
-  "description": "All jack operating controls",
-  "node": "13_ControlConsole",
-  "camera": "Cam_13_ControlConsole"
-}
+    "node": "05_Winged",
+    "title": "Winged Design",
+    "camera": "Cam_05_Winged",
+    "type": "callout",
+    "description": "This design characteristic enables the unit to be utilized on all wide-body aircraft. However, it also introduces a potential tipping hazard that must be closely monitored during transportation. The weight distribution on this unit, especially when empty, may increase the risk of tipping."
+  },
+  {
+    "node": "06_TransportMethod",
+    "title": "Transport Method",
+    "camera": "Cam_06_TransportMethod",
+    "type": "callout",
+    "description": "This unit must be lifted exclusively with a forklift utilizing the specified forklift holes. Older models lacking designated forklift holes should be lifted with utmost care. It is crucial to avoid \"pushing\" the unit using a forklift under any circumstances."
+  },
+  {
+    "node": "07_HandStrap",
+    "title": "Hand Strap",
+    "camera": "Cam_07_HandStrap",
+    "type": "callout",
+    "description": "This unit is equipped with hand straps to aid in maneuvering. Caution should be exercised at all times when handling the container."
+  },
+  {
+    "node": "08_DoorHandle",
+    "title": "Door Handle",
+    "camera": "Cam_08_DoorHandle",
+    "type": "callout",
+    "description": "Employees are required to visually inspect to verify door latches are securely closed, as doors are not usually open during transport to ensure integrity of the shipment. Doors are only opened for cleaning upon the unit's return from the customer or for inspection by a regulatory agency."
+  },
+  {
+    "node": "09_Label",
+    "title": "Space for Label",
+    "camera": "Cam_09_Label",
+    "type": "callout",
+    "description": "This space is commonly designated for attaching Time & Temperature-sensitive labels, and if applicable, any dangerous goods labels can also be affixed by the customer. In the event of a missing Time & Temperature-sensitive label, a cargo agent may place one in that location. However, it's important to note that we never affix dangerous goods labels on a container."
+  },
+  {
+    "node": "10_MainDoor",
+    "title": "Container Door",
+    "type": "animation",
+    "camera": "Cam_10_MainDoor",
+    "description": "Toggle open/close of the main door.",
+    "animation": "DoorOpen_Main"
+    
+  },
+  {
+    "node": "11_CableBin_Door",
+    "title": "Cable Bin Door",
+    "type": "animation",
+    "camera": "Cam_11_CableBin_Door",
+    "description": "Toggle open/close of the cable bin door.",
+    "animation": "DoorOpen_CableBin, DoorOpen_CableBin.001"
+  }
 ]
