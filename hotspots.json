@@ -1,82 +1,120 @@
 [
   {
-    "node": "01_ChargingSocket",
-    "title": "Charging Socket",
-    "camera": "Cam_01_ChargingSocket",
+    "node": "01_FuelEngineLevel",
+    "title": "Fuel/Engine Level",
+    "camera": "Cam_01_FuelEngineLevel",
     "type": "callout",
-    "description": "This unit provides two charging sockets to charge this unit. It is possible to use just 1 cable or both in parallel (using both is recommended). For example, charging on a single cable from 50% to 100% battery charge takes 4 hours, whereas with both cables it takes 2 hours. Plugging in both cables results in faster charging.\n\nNOTE: When plugging in both cables, use power outlets on separate circuits. Plugging in both cables into the same circuit may result in Amp overload and circuit breaker to trip. Also, make sure to extend cords to their full length to minimize overheating."
+    "description": "Before starting the vehicle, check the basic fluid levels to include fuel and engine oil. New model versions the oil is checked from the vehicle data center on the instrument panel."
   },
   {
-    "node": "02_ControlPanel",
-    "title": "Control Panel",
-    "camera": "Cam_02_ControlPanel",
+    "node": "02_DeicingAntiIcingFluid",
+    "title": "Deicing/Anti-icing Fluid Level Verification",
+    "camera": "Cam_02_DeicingFluid",
     "type": "callout",
-    "description": "The control panel displays the unit’s temperature and battery status as well as the unit’s status indicators. Any deviation from a normal operating status, (e.g., a yellow flashing light and/or an alarm) employees should contact the TempControl Tower at 877-525-4628 prior to taking any action."
+    "description": "Verify deicing and anti-icing fluid levels before leaving truck staging area. Fluid levels can be monitored throughout deicing operations using monitors inside of the deicing truck cab and basket."
   },
   {
-    "node": "03_CableBin",
-    "title": "Cable Bin",
-    "camera": "Cam_03_CableBin",
+    "node": "03_GlycolFillPorts",
+    "title": "Glycol Fill Ports",
+    "camera": "Cam_03_GlycolFillPorts",
     "type": "callout",
-    "description": "The Cable Bin is outfitted with two charging units and two five-meter-long plug sockets, along with plug-in adapters that enable recharging the internal batteries of the units globally."
+    "description": "To avoid mixing deicing and anti-icing fluids in the truck tanks all United deicing equipment are equipped with different size and style valve fittings. The fittings are incompatible with each other. Whenever top loading fluids, always verify the correct tank is loaded with the correct fluid."
   },
   {
-    "node": "04_DocumentPouch",
-    "title": "Document Pouch",
-    "camera": "Cam_04_DocumentPouch",
+    "node": "04_WiperFluids",
+    "title": "Wiper Fluids",
+    "camera": "Cam_04_WiperFluids",
     "type": "callout",
-    "description": "Document Pouches are used to transport copies of relevant shipment documents.\n\n*Location of the document pouch may vary by manufacture type."
+    "description": "De/anti-icing fluids can adhere to windows, windshield and mirrors limiting visibility, so making sure all window wiper fluids are full before using the deicing vehicle is a critical part of the user check. Remember, if you cannot see due to any visual obstruction, steam, or adhering de/anti-icing fluids, stop the vehicle until conditions improve."
   },
   {
-    "node": "05_Winged",
-    "title": "Winged Design",
-    "camera": "Cam_05_Winged",
+    "node": "05_BoomControls",
+    "title": "Boom Controls",
+    "camera": "Cam_05_BoomControls",
     "type": "callout",
-    "description": "This design characteristic enables the unit to be utilized on all wide-body aircraft. However, it also introduces a potential tipping hazard that must be closely monitored during transportation. The weight distribution on this unit, especially when empty, may increase the risk of tipping."
+    "description": "The basket can be controlled from the outside of the vehicle and from inside the deicing cab. The Vestergaard Beta has three separate booms, including a telescoping nozzle, that reach a total height of 63 feet (models may vary). The instruction on how to activate these booms is part of the deicing operator's training."
   },
   {
-    "node": "06_TransportMethod",
-    "title": "Transport Method",
-    "camera": "Cam_06_TransportMethod",
+    "node": "06_Communication",
+    "title": "Communication",
+    "camera": "Cam_06_Communication",
     "type": "callout",
-    "description": "This unit must be lifted exclusively with a forklift utilizing the specified forklift holes. Older models lacking designated forklift holes should be lifted with utmost care. It is crucial to avoid \"pushing\" the unit using a forklift under any circumstances."
+    "description": "While operating the basket, you must establish and maintain positive communication with the vehicle driver. If using single man operations, a communication link must be established and maintained with personnel outside of the vehicle."
   },
   {
-    "node": "07_HandStrap",
-    "title": "Hand Strap",
-    "camera": "Cam_07_HandStrap",
+    "node": "07_GroundGuns",
+    "title": "Ground Guns",
+    "camera": "Cam_07_GroundGuns",
     "type": "callout",
-    "description": "This unit is equipped with hand straps to aid in maneuvering. Caution should be exercised at all times when handling the container."
+    "description": "The Vestergaard Beta is equipped with 2 ground guns, one on each side of the truck."
   },
   {
-    "node": "08_DoorHandle",
-    "title": "Door Handle",
-    "camera": "Cam_08_DoorHandle",
+    "node": "08_EmergencyStops",
+    "title": "Emergency Stops",
+    "camera": "Cam_08_EmergencyStops",
     "type": "callout",
-    "description": "Employees are required to visually inspect to verify door latches are securely closed, as doors are not usually open during transport to ensure integrity of the shipment. Doors are only opened for cleaning upon the unit's return from the customer or for inspection by a regulatory agency."
+    "description": "In an emergency requiring immediate termination of all boom movement, fluid pumping and operational drive: The location of all emergency stop switches for the local station equipment will be trained in the equipment operator training."
   },
   {
-    "node": "09_Label",
-    "title": "Space for Label",
-    "camera": "Cam_09_Label",
+    "node": "09_DeicingAccessPort",
+    "title": "Deicing (Type I) Access Port",
+    "camera": "Cam_09_DeicingAccessPort",
     "type": "callout",
-    "description": "This space is commonly designated for attaching Time & Temperature-sensitive labels, and if applicable, any dangerous goods labels can also be affixed by the customer. In the event of a missing Time & Temperature-sensitive label, a cargo agent may place one in that location. However, it's important to note that we never affix dangerous goods labels on a container."
+    "description": "This access port is used to extract or test the deicing fluid (Type I) mixture. The port location varies by model and is typically found on the body of the vehicle. Operators must ensure proper PPE is worn, as the fluid may be hot and pressurized."
   },
   {
-    "node": "10_MainDoor",
-    "title": "Container Door",
-    "type": "animation",
-    "camera": "Cam_10_MainDoor",
-    "description": "Toggle open/close of the main door.",
-    "animation": "DoorOpen_Main"
-    
+    "node": "10_AntiIcingAccessPort",
+    "title": "Anti-Icing (Type IV) Access Port",
+    "camera": "Cam_10_AntiIcingAccessPort",
+    "type": "callout",
+    "description": "Used to sample or verify the anti-icing (Type IV) fluid, this access point ensures the fluid is within the correct specification before being applied. Always confirm the port location based on the specific Beta model in use."
   },
   {
-    "node": "11_CableBin_Door",
-    "title": "Cable Bin Door",
-    "type": "animation",
-    "camera": "Cam_11_CableBin_Door",
-    "description": "Toggle open/close of the cable bin door.",
-    "animation": "DoorOpen_CableBin, DoorOpen_CableBin.001"
+    "node": "11_DeicingFluidPlacard",
+    "title": "Deicing Fluid Placard",
+    "camera": "Cam_11_DeicingFluidPlacard",
+    "type": "callout",
+    "description": "Each deicing fluid tank is clearly labeled with a placard identifying it as Type I fluid. This helps prevent cross-contamination and ensures the correct fluid is applied during operations. Always verify placards match the fluid being filled or used."
+  },
+  {
+    "node": "12_AntiIceFluidPlacard",
+    "title": "Anti-Ice Fluid Placard",
+    "camera": "Cam_12_AntiIceFluidPlacard",
+    "type": "callout",
+    "description": "Anti-icing fluid tanks are marked with a distinct Type IV placard. Proper identification is critical during fluid loading and application. Operators must confirm all placards are present, legible, and match the corresponding tank contents."
+  },
+  {
+    "node": "13_TelescopingNozzle",
+    "title": "Telescoping Nozzle",
+    "camera": "Cam_13_TelescopingNozzle",
+    "type": "callout",
+    "description": "The Vestergaard Beta features a telescoping spray nozzle integrated into the boom system. This design allows the operator to maintain a close and controlled distance from the aircraft surface, enhancing spray precision and reducing fluid waste. The nozzle can extend as part of the boom’s reach up to 63 feet."
+  },
+  {
+    "node": "14_BoomSystem",
+    "title": "Boom System",
+    "camera": "Cam_14_BoomSystem",
+    "type": "callout",
+    "description": "The Vestergaard Beta is equipped with a three-part boom system, including a telescoping center section. It provides a maximum nozzle height of up to 63 feet (model dependent), allowing operators to access high and hard-to-reach areas of the aircraft safely and efficiently."
+  },
+  {
+    "node": "Cam_15_BasketView",
+    "title": "Basket Interior",
+    "camera": "Cam_15_BasketView",
+    "type": "camera",
+    "icon": {
+      "default": "media/Nav_default.png",
+      "hover": "media/Nav_active.png"
+    }
+  },
+  {
+    "node": "Cam_16_CabinView",
+    "title": "Cabin Interior",
+    "camera": "Cam_16_CabinView",
+    "type": "camera",
+    "icon": {
+      "default": "media/Nav_default.png",
+      "hover": "media/Nav_active.png"
+    }
   }
 ]

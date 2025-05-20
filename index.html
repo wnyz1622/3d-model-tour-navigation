@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Dokasch Opticooler RKN 3D Tour</title>
+    <title>Vestergaard Elephant Beta 3D Tour</title>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
           <img src="media/logo.png" alt="Logo" class="logo">
         </div>
     </header>
-    <div id="modelTitle">Dokasch Opticooler RKN</div>
+    <div id="modelTitle">Vestergaard Elephant Beta</div>
     <div id="container"></div>
     
     <div id="loadingScreen" class="loading-screen">
@@ -43,6 +43,9 @@
     <button id="techSpecBtn" title="Technical Specifications" class="icon-button techspec-btn">
         <img id="techSpecIcon" src="media/spec_default.png" alt="Tech Specs">
     </button>
+
+    <div id="cameraControls"></div>
+
     
 
 
@@ -210,7 +213,7 @@
                     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                     this.loader.setDRACOLoader(dracoLoader);
                     
-                    const modelPath = 'media/model/scene.glb';
+                    const modelPath = 'media/model/scene-v2.glb';
                     console.log('Loading model from:', modelPath);
                     
                 
@@ -318,7 +321,7 @@
                             this.model.position.sub(center);
 
                             // 180 degrees in radians
-                            this.model.rotation.y = Math.PI;
+                            this.model.rotation.y = Math.PI /1.25;
                             
                             
                             // Store model dimensions for positioning hotspots
@@ -329,10 +332,12 @@
                             const maxDim = Math.max(size.x, size.y, size.z);
                             const fov = this.camera.fov * (Math.PI / 180);
                             let cameraZ = Math.abs(maxDim / Math.tan(fov / 2));
-                            this.camera.position.set(0, 0, cameraZ * 1);
+                            this.camera.position.set(0, 0, cameraZ * .5);
+                    
+
                             this.camera.lookAt(0, 0, 0);
                             this.camera.updateProjectionMatrix();
-                            this.initialCameraPosition = new THREE.Vector3(0, 0, cameraZ * 1);
+                            this.initialCameraPosition = new THREE.Vector3(0, 0, cameraZ * .5);
                             this.initialCameraTarget = new THREE.Vector3(0, 0, 0);
                             // Create hotspots after model is loaded
                             this.createDefaultHotspots();
@@ -385,6 +390,87 @@
                 
                 const response = await fetch('hotspots.json');
                 const hotspotDataList = await response.json();
+                // 🔎 Filter camera hotspots from JSON
+                const cameraHotspots = hotspotDataList.filter(h => h.type === 'camera');
+
+                // 🎯 Get the UI container
+                const cameraControls = document.getElementById("cameraControls");
+                cameraControls.innerHTML = ''; // Clear existing
+
+                // 🔁 Generate buttons
+                cameraHotspots.forEach(camData => {
+                    // 🔲 Container for button + label
+                    const container = document.createElement("div");
+                    container.className = "cam-btn-container";
+
+                    // 🎛️ Button with SVG icon
+                    const btn = document.createElement("button");
+                    btn.className = "cam-btn";
+
+                    const img = document.createElement("img");
+                    img.src = camData.icon?.default || 'media/default_view.svg';
+                    img.alt = camData.title;
+                    img.className = "cam-btn-icon";
+                    btn.appendChild(img);
+
+                    // 🏷️ Label next to button
+                    const label = document.createElement("span");
+                    label.textContent = camData.title;
+                    label.className = "cam-btn-label";
+
+                    // 👂 Hover icon swap
+                    btn.addEventListener("mouseenter", () => {
+                        if (camData.icon?.hover) img.src = camData.icon.hover;
+                    });
+                    btn.addEventListener("mouseleave", () => {
+                        img.src = camData.icon?.default || 'media/default_view.svg';
+                    });
+
+                    // 🧭 Camera movement on click
+                    btn.addEventListener("click", () => {
+                        const cameraNode = this.model.getObjectByName(camData.camera);
+                        if (!cameraNode || !cameraNode.isCamera) {
+                            console.warn('❌ Camera not found:', camData.camera);
+                            return;
+                        }
+
+                        const targetPos = new THREE.Vector3();
+                        cameraNode.getWorldPosition(targetPos);
+
+                        const targetQuat = new THREE.Quaternion();
+                        cameraNode.getWorldQuaternion(targetQuat);
+
+                        const startPos = this.camera.position.clone();
+                        const startQuat = this.camera.quaternion.clone();
+                        const startTarget = this.controls.target.clone();
+                        const endTarget = new THREE.Vector3(0, 0, -1).applyQuaternion(targetQuat).add(targetPos);
+
+                        const duration = 1000;
+                        const startTime = Date.now();
+
+                        const animate = () => {
+                            const elapsed = Date.now() - startTime;
+                            const t = Math.min(elapsed / duration, 1);
+                            const ease = 1 - Math.pow(1 - t, 4);
+
+                            this.camera.position.lerpVectors(startPos, targetPos, ease);
+                            this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
+                            this.controls.target.lerpVectors(startTarget, endTarget, ease);
+                            this.controls.update();
+
+                            if (t < 1) requestAnimationFrame(animate);
+                        };
+
+                        animate();
+                    });
+
+                    // 📦 Append elements
+                    container.appendChild(btn);
+                    container.appendChild(label);
+                    cameraControls.appendChild(container);
+                });
+
+
 
                 hotspotDataList.forEach(hotspotData => {
                     let node = this.model.getObjectByName(hotspotData.node);
@@ -708,6 +794,34 @@
                     console.warn(`❌ No camera node found for: ${camNodeName}`);
                 }
             }
+moveCameraTo(positionArray, quaternionArray) {
+    const startPos = this.camera.position.clone();
+    const startQuat = this.camera.quaternion.clone();
+
+    const targetPos = new THREE.Vector3().fromArray(positionArray);
+    const targetQuat = new THREE.Quaternion().fromArray(quaternionArray);
+
+    const startTarget = this.controls.target.clone();
+    const endTarget = new THREE.Vector3(0, 0, -1).applyQuaternion(targetQuat).add(targetPos);
+
+    const duration = 1000;
+    const startTime = Date.now();
+
+    const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 4);
+
+        this.camera.position.lerpVectors(startPos, targetPos, ease);
+        this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
+        this.controls.target.lerpVectors(startTarget, endTarget, ease);
+        this.controls.update();
+
+        if (t < 1) requestAnimationFrame(animate);
+    };
+
+    animate();
+}
 
             updateHotspotPositions() {
                 if (!this.hotspots) return;
