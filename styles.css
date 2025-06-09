@@ -1,15 +1,25 @@
-body { margin: 0; }
-canvas { display: block; }
-html, body {
+body {
+    margin: 0;
+}
+
+canvas {
+    display: block;
+}
+
+html,
+body {
     margin: 0;
     padding: 0;
     height: 100%;
     width: 100%;
-    overflow: hidden;            /* prevents all scrollbars */
-    position: fixed;             /* prevents bounce on iOS */
+    overflow: hidden;
+    /* prevents all scrollbars */
+    position: fixed;
+    /* prevents bounce on iOS */
     touch-action: none;
     overscroll-behavior: none;
 }
+
 h2 {
     font-size: 24px;
     font-weight: 500;
@@ -31,13 +41,15 @@ strong {
     color: #fff;
 }
 
-#container, canvas {
+#container,
+canvas {
     position: absolute;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
 }
+
 .hotspot {
     position: absolute;
     width: 32px;
@@ -51,72 +63,66 @@ strong {
     z-index: 1000;
     pointer-events: auto;
 }
+
 .hotspot:hover {
     transform: scale(1.2);
 }
+
 .hotspot-info {
     position: absolute;
     background: #363D47;
-    opacity: 90%;
+    opacity: 95%;
     color: white;
     padding: 21px;
     kerning: 1;
+
     border-radius: 6px;
     font-family: 'Noto Sans', sans-serif;
     pointer-events: none;
     display: none;
     z-index: 1001;
-    
+
     /* Default: hover mode (title only) */
-    height: 25px;              /* fixed height */
-    width: auto;               /* hug content */
+    height: 25px;
+    /* fixed height */
+    width: auto;
+    /* hug content */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .hotspot-info.active {
-    height: auto;              /* hug height for title + description */
-    width: 350px;              /* fixed width */
+    height: auto;
+    /* hug height for title + description */
+    width: 350px;
+    /* fixed width */
     white-space: normal;
 }
 
 .hotspot-title {
-    font-weight: 600;
-    font-size: 14pt; /* ≈26.7px */
+    font-weight: 500;
+    font-size: 14pt;
+    /* ≈26.7px */
     margin-bottom: 12px;
 }
 
 .hotspot-description {
     font-weight: 400;
-    font-size: 12pt; /* ≈21.3px */
+    font-size: 12pt;
+    /* ≈21.3px */
     line-height: 1.4em;
     white-space: normal;
     word-break: break-word;
     display: none;
-    white-space: pre-wrap; 
+    white-space: pre-wrap;
 }
 
 .hotspot-info.active .hotspot-description {
     display: block;
 }
 
-#fullscreenBtn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.5);
-    border: none;
-    border-radius: 5px;
-    padding: 10px;
-    cursor: pointer;
-    z-index: 1000;
-}
-#fullscreenBtn svg {
-    width: 24px;
-    height: 24px;
-    fill: white;
-}
+
 .loading-screen {
     position: fixed;
     top: 0;
@@ -131,9 +137,11 @@ strong {
     font-family: Arial, sans-serif;
     z-index: 1000;
 }
+
 .loading-content {
     text-align: center;
 }
+
 .progress-bar {
     width: 200px;
     height: 10px;
@@ -141,6 +149,7 @@ strong {
     border-radius: 5px;
     margin-top: 10px;
 }
+
 .progress {
     width: 0%;
     height: 100%;
@@ -149,190 +158,267 @@ strong {
     transition: width 0.3s ease;
 }
 
-    .top-header {
-        position: fixed;
-        top: 0;
-        width: 100%;
-        height: 64px;
-        padding: 0 40px;
-        background-color: #0000009d;
-        backdrop-filter: blur(10px);
-        z-index: 2000;
-        display: flex;
-        align-items: center;
-    }
+.top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    padding: 0 20px;
+    background-color: #1b1b1b9d;
+    backdrop-filter: blur(10px);
+    z-index: 2000;
 
-    .header-content {
-    max-width: 1200px;
-    width: 100%;
+    /* 🔥 This is the fix for stacking */
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    }
 
-    .logo {
-    height: 40px;
-    object-fit: contain;
-    }
-
-    .page-content {
-    margin-top: 100px; /* add top padding so content is not hidden under header */
-    padding: 40px;
-    
-    }
-    #fullscreenBtn {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.5);
-        border: none;
-        border-radius: 5px;
-        padding: 10px;
-        cursor: pointer;
-        z-index: 1000;
-    }
-    
-    #fullscreenBtn svg {
-        width: 24px;
-        height: 24px;
-        fill: white;
-    }
-   /* 🔲 Container for all camera buttons (positioned left center) */
-#cameraControls {
-    position: absolute;
-    top: 50%;
-    left: 50px;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    z-index: 10;
-  }
-  
-  /* 📦 Each button + label pair */
-  .cam-btn-container {
-    display: flex;
-    align-items: center;
+    box-sizing: border-box;
     gap: 20px;
-  }
-  
-  /* 🎛️ The camera icon button */
-  .cam-btn {
-    width: 24px;
-    height: 24px;
-    border: none;
-    background: none;
-    padding: 0;
-    cursor: pointer;
-  }
-  
-  /* 🖼️ SVG icon inside the button */
-  .cam-btn-icon {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  
-  /* 🏷️ Label text next to the icon */
-  .cam-btn-label {
-    color: rgb(63, 62, 62);
-    font-size: 14px;
-    font-family: 'Noto Sans', sans-serif;
-    pointer-events: none; /* prevent label from blocking clicks on button */
-  }
-  
-  /* ✨ Optional hover effect for label */
-  .cam-btn-container:hover .cam-btn-label {
-    /* text-decoration: underline; */
-  }
-  .cam-btn:hover .cam-btn-icon {
-    transform: scale(1.1);
-  }
-    .icon-button {
-        position: absolute;
-        background: none;
-        border: none;
-        cursor: pointer;
-        z-index: 1000;
-        padding: 0;
-    }
-    
-    .reset-btn {
-        bottom: 25px;
-        left: 100px;
-    }
-    
-    .techspec-btn {
-        bottom: 20px;
-        left: 50px;
-    }
-    
-    .icon-button img {
-        width: 32px;
-        height: auto;
-    }
-    
-    #specModal {
-        display: none;
-        position: absolute;
-        top: 130px;
-        bottom: 80px;
-        left: 50px;
-        right: 50px;
-        background: #363d47d5;
-        backdrop-filter: blur(10px);
-        color: #fff;
-        padding: 24px;
-        border-radius: 6px;
-        width: 400px;
-        height: fit-content;
-        max-width: fit-content;
-        max-height: 80%;
-        overflow-y: auto;
-        font-family: 'Noto Sans', sans-serif;
-        z-index: 1002;
-    }
-    
-    #closeSpecIcon {
-        position: absolute;
-        top: 24px;
-        right: 24px;
-        width: 32px;
-        height: 32px;
-        cursor: pointer;
-        z-index: 1003;
-    }
-    
-    #specModal::-webkit-scrollbar {
-        width: 10px;
-    }
-
-    #specModal::-webkit-scrollbar-track {
-        /* background: #2c2c2c;  Track background */
-        border-radius: 6px;
-    }
-
-    #specModal::-webkit-scrollbar-thumb {
-        background-color: #888;  /* Scroll thumb color */
-        border-radius: 6px;
-        /* border: 2px solid #2c2c2c;   */
-    }
-
-    #specModal::-webkit-scrollbar-thumb:hover {
-        background-color: #aaa;
-    }
-    #modelTitle {
-    position: absolute;
-    top: 80px; /* just below the header */
-    width: 100%;
-    max-width: fit-content;
-    padding: 0 50px;
-    text-align:center;
-    font-size: 24px;
-    font-weight: 500;
-    color: black;
-    z-index: 1001;
-    font-family: 'Noto Sans', sans-serif;
-    pointer-events: none;
 }
 
+.logo {
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.header-title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    color: white;
+    font-size: 21px;
+    font-weight: 300;
+    font-family: 'Noto Sans', sans-serif;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+}
+
+.page-content {
+    margin-top: 100px;
+    /* add top padding so content is not hidden under header */
+    padding: 40px;
+
+}
+
+
+
+/* 🔲 Container for all camera buttons (positioned left center) */
+#cameraControls {
+    position: relative;
+    top: 80px;
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    justify-content: center;
+    /* Center items inside the container */
+    z-index: 10;
+
+    /* Center the entire container */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* 📦 Each button + label pair */
+.cam-btn-container {
+    display: flex;
+    gap: 10px;
+    background-color: #d4d4d4;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+/* 🏷️ Label text next to the icon */
+.cam-btn-label {
+    color: #363D47;
+    font-size: 16px;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* .cam-btn-label:hover {
+    color: #ef5337;
+    font-size: 14px;
+    font-family: 'Noto Sans', sans-serif;
+
+  } */
+
+
+/* ✨ Optional hover effect for label */
+.cam-btn-container:hover .cam-btn-label {
+    /* text-decoration: underline; */
+}
+
+.cam-btn-container:hover {
+    background-color: #d4d4d4c4;
+    /* border: 1px solid #a1a1a1; */
+}
+
+.cam-btn-container.active {
+    background-color: #ef5337;
+}
+
+.cam-btn-container.active .cam-btn-label {
+    color: white;
+}
+
+/* When hovered (optional, for non-click behavior) */
+.cam-btn-container:hover:not(.active) {
+    background-color: #d4d4d45e;
+}
+
+/* .cam-btn-container:hover:not(.active) .cam-btn-label {
+    color: white;
+  } */
+.button-column {
+    position: absolute;
+    bottom: 28px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* spacing between buttons */
+    z-index: 1000;
+}
+
+/* Icon button layout (if not already defined) */
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* Image style for all buttons */
+.icon-button img {
+    width: 28px;
+    height: 28px;
+    background-color: #d4d4d4a6;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.icon-button:hover img {
+    background-color: #8686866b;
+}
+
+.reset-btn {
+    bottom: 80px;
+    left: 20px;
+}
+
+.techspec-btn {
+    bottom: 140px;
+    left: 20px;
+}
+
+.fullscreen-btn {
+    bottom: 20px;
+    left: 20px;
+}
+
+
+#specModal {
+    display: none;
+    position: absolute;
+    top: 60px;
+    bottom: 0px;
+    right: 0px;
+    background: #010202a2;
+    backdrop-filter: blur(30px);
+    color: #fff;
+    padding: 30px;
+    padding-bottom: 120px;
+    /* Increase this value for more space */
+
+    border-radius: 0px;
+    width: 500px;
+    height: fit-content;
+    max-width: fit-content;
+    max-height: 100%;
+    overflow-y: auto;
+    font-family: 'Noto Sans', sans-serif;
+    z-index: 1002;
+}
+
+#closeSpecIcon {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    z-index: 1003;
+}
+
+#specModal::-webkit-scrollbar {
+    width: 10px;
+}
+
+#specModal::-webkit-scrollbar-track {
+    /* background: #2c2c2c;  Track background */
+    border-radius: 6px;
+}
+
+#specModal::-webkit-scrollbar-thumb {
+    background-color: #888;
+    /* Scroll thumb color */
+    border-radius: 6px;
+    /* border: 2px solid #2c2c2c;   */
+}
+
+#specModal::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa;
+}
+
+/* Section headings like "Chassis", "Tank", etc. */
+.spec-item {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 10px 0;
+    border-bottom: 1px dashed #444;
+    padding-bottom: 4px;
+}
+
+.spec-item:last-child {
+    margin-bottom: 20px;
+}
+
+/* Allow label to wrap and align vertically */
+.spec-label {
+    font-weight: 500;
+    color: #bbbbbb;
+    flex: 0 0 40%;
+    /* Take up 40% of the row, allow wrapping */
+    min-width: 140px;
+    text-align: left;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+/* Value fills remaining space and aligns with label */
+.spec-value {
+    flex: 1;
+    color: #ffffff;
+    text-align: left;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.spec-section {
+    margin-top: 24px;
+    font-size: 16px;
+    /* ↓ smaller font */
+    font-weight: 600;
+    color: #ffffff;
+    border-bottom: 1px solid #555;
+    padding-bottom: 4px;
+    letter-spacing: 0.5px;
+    /* optional: improves readability at smaller sizes */
+}

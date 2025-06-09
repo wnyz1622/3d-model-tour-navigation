@@ -101,20 +101,18 @@
     "node": "Cam_15_BasketView",
     "title": "Basket Interior",
     "camera": "Cam_15_BasketView",
-    "type": "camera",
-    "icon": {
-      "default": "media/Nav_default.png",
-      "hover": "media/Nav_active.png"
-    }
+    "type": "camera"
   },
   {
     "node": "Cam_16_CabinView",
     "title": "Cabin Interior",
     "camera": "Cam_16_CabinView",
-    "type": "camera",
-    "icon": {
-      "default": "media/Nav_default.png",
-      "hover": "media/Nav_active.png"
-    }
+    "type": "camera"
+  },
+  {
+    "node": "Cam_17_ExteriorView",
+    "title": "Exterior",
+    "camera": "Cam_17_ExteriorView",
+    "type": "camera"
   }
 ]

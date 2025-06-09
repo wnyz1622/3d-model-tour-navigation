@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Vestergaard Elephant Beta 3D Tour</title>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <header class="top-header">
-        <div class="header-content">
-          <img src="media/logo.png" alt="Logo" class="logo">
-        </div>
-    </header>
-    <div id="modelTitle">Vestergaard Elephant Beta</div>
+    <div class="top-header">
+        <img src="media/logo.png" alt="Logo" class="logo" />
+        <h1 class="header-title">Vestergaard Elephant Beta</h1>
+
+    </div>
     <div id="container"></div>
-    
+
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-content">
             <h2>Loading...</h2>
@@ -29,24 +31,23 @@
         <img id="closeSpecIcon" src="media/close.png" alt="Close">
         <div id="specContent"></div>
     </div>
+    <div class="button-column">
+        <button id="techSpecBtn" title="Technical Specifications" class="icon-button techspec-btn">
+            <img id="techSpecIcon" src="media/spec_default.svg" alt="Tech Specs">
+        </button>
 
-    <button id="fullscreenBtn" title="Toggle Fullscreen">
-        <svg viewBox="0 0 24 24">
-            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-        </svg>
-    </button>
-    
-    <button id="resetBtn" title="Reset View" class="icon-button reset-btn">
-        <img id="resetIcon" src="media/Reset_default.png" alt="Reset">
-    </button>
-    
-    <button id="techSpecBtn" title="Technical Specifications" class="icon-button techspec-btn">
-        <img id="techSpecIcon" src="media/spec_default.png" alt="Tech Specs">
-    </button>
+        <button id="resetBtn" title="Reset View" class="icon-button reset-btn">
+            <img id="resetIcon" src="media/reset_default.svg" alt="Reset">
+        </button>
+        <button id="fullscreenBtn" class="icon-button fullscreen-btn" title="Fullscreen">
+            <img src="media/Fullscreen_default.svg" alt="Fullscreen" />
+        </button>
 
+
+    </div>
     <div id="cameraControls"></div>
 
-    
+
 
 
 
@@ -66,7 +67,7 @@
         import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
         import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
         import { Mesh } from 'three';
-        
+
 
 
 
@@ -87,22 +88,23 @@
                 //this.scene.background = new THREE.Color(0xf0f0f0);
                 const rgbeLoader = new RGBELoader();
                 rgbeLoader.load('media/model/cannon_1k.hdr', (hdrTexture) => {
-                        hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-                        this.scene.environment = hdrTexture;
-                        //this.scene.background = hdrTexture;
-                    });
+                    hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+                    this.scene.environment = hdrTexture;
+                    
+                    //this.scene.background = hdrTexture;
+                });
 
-                
+
 
                 const bgLoader = new THREE.TextureLoader();
-                bgLoader.load('media/model/bg_90DDC087_903D_26CF_41D4_63867E2E241A.jpg', (bgTexture) => {
+                bgLoader.load('media/model/GradientBackground_2.png', (bgTexture) => {
                     this.scene.background = bgTexture; // ✅ visible background
                 });
 
                 // Create camera
                 this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.camera.position.set(0,0, 0);
-                this.camera.lookAt(0, 0, 0); 
+                this.camera.position.set(0, 0, 0);
+                this.camera.lookAt(0, 0, 0);
 
                 // Create renderer
                 this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -114,29 +116,63 @@
 
                 // 🔆 Enable tone mapping and adjust exposure
                 this.renderer.toneMapping = THREE.LinearToneMapping; // or THREE.ReinhardToneMapping
-                this.renderer.toneMappingExposure = 1.0; // adjust brightness here (try 1.2–2.0)
+                this.renderer.toneMappingExposure = 0.95; // adjust brightness here (try 1.2–2.0)
                 this.renderer.outputEncoding = THREE.sRGBEncoding;
 
                 // Add lights
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
                 this.scene.add(ambientLight);
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-                directionalLight.position.set(5, 5, 5);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+                directionalLight.position.set(0, 10, 0);
+                directionalLight.intensity = 1.75; // more shadow strength
                 directionalLight.castShadow = true;
+
+                // Add these shadow properties
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 100;
+                directionalLight.shadow.camera.left = -25;
+                directionalLight.shadow.camera.right = 25;
+                directionalLight.shadow.camera.top = 25;
+                directionalLight.shadow.camera.bottom = -25;
+                directionalLight.shadow.bias = -0.0005;
+                directionalLight.shadow.normalBias = 0.02;
                 this.scene.add(directionalLight);
 
-                // Add a test cube
-                // const geometry = new THREE.BoxGeometry(1, 1, 1);
-                // const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-                // const cube = new THREE.Mesh(geometry, material);
-                // this.scene.add(cube);
-                // console.log('Added test cube');
+                // Add floor disc
+                const floorGeometry = new THREE.CircleGeometry(25, 48);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xbbbbbb,
+                    transparent: true,
+                    opacity: .7, 
+                    roughness: 1.0,
+                    metalness: 0.0,
+                    side: THREE.DoubleSide
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+                floor.position.y = -5.5; // Position lower below the model
+                floor.position.z = -5.5;
+                floor.position.x = 2.5;
+                floor.receiveShadow = true;
+                this.scene.add(floor);
 
                 // Add controls
                 this.controls = new OrbitControls(this.camera, this.renderer.domElement);
                 this.controls.enableDamping = true;
                 this.controls.dampingFactor = 0.05;
+
+                // Set orbit boundaries
+                // this.controls.minDistance = 2; // Minimum zoom distance
+                this.controls.maxDistance = 30; // Maximum zoom distance
+                this.controls.minPolarAngle = Math.PI / 6; // Minimum vertical angle (30 degrees)
+                this.controls.maxPolarAngle = Math.PI / 2; // Maximum vertical angle (120 degrees)
+                this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
+                this.controls.maxAzimuthAngle = Math.PI;
+                this.controls.enablePan = false; // Disable panning to keep focus on the model
+                this.controls.target.y = 0; // Keep the orbit target at floor level
 
                 // Setup loaders
                 this.setupLoaders();
@@ -165,7 +201,7 @@
                 this.setupFullscreenButton();
                 this.setupTechSpecToggle();
                 this.setupResetButton();
-                
+
 
                 // Start animation loop
                 this.clock = new THREE.Clock();
@@ -187,7 +223,7 @@
                 return new Promise((resolve, reject) => {
                     // Create loading manager first
                     const loadingManager = new THREE.LoadingManager();
-                    
+
                     // Setup loading manager callbacks
                     loadingManager.onProgress = (url, loaded, total) => {
                         const progress = (loaded / total) * 100;
@@ -207,24 +243,24 @@
 
                     // Create a new GLTFLoader with the loading manager
                     this.loader = new GLTFLoader(loadingManager);
-                    
+
                     // Setup DRACO decoder
                     const dracoLoader = new DRACOLoader();
                     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                     this.loader.setDRACOLoader(dracoLoader);
-                    
+
                     const modelPath = 'media/model/scene-v2.glb';
                     console.log('Loading model from:', modelPath);
-                    
-                
+
+
                     this.loader.load(
                         modelPath,
                         (gltf) => {
                             console.log('Model loaded successfully');
-                            
+
                             console.log("🔍 Checking material variants...");
                             // ✅ Get global variant list
-                            
+
 
                             this.model = gltf.scene;
                             // Store meshIndex for each mesh so we can reference default material later
@@ -240,7 +276,7 @@
                             });
 
                             this.gltf = gltf;
-                            
+
                             //hide object after load
                             this.cableContentsObject = this.model.getObjectByName("CableBinContents");
                             if (this.cableContentsObject) {
@@ -277,8 +313,8 @@
                             console.log('=== Available Nodes in Model ===');
                             const nodePositions = {};
                             const targetNodes = ['Main_FrontView', 'Main_RearView', 'Main_LeftView', 'Main_RightView', '01_ChargingSocket'];
-                           
-                            
+
+
                             this.model.traverse((node) => {
                                 if (node.isMesh || node.isObject3D) {
                                     const position = new THREE.Vector3();
@@ -288,10 +324,10 @@
                                         type: node.type,
                                         position: position
                                     };
-                                    
+
                                     // Log all nodes
                                     console.log(`Node: "${node.name}" (Type: ${node.type}) Position:`, position);
-                                    
+
                                     // Specifically log target nodes if found
                                     if (targetNodes.includes(node.name)) {
                                         console.log('Found target node:', {
@@ -301,7 +337,7 @@
                                     }
                                 }
                             });
-                            
+
                             // Log summary of target nodes
                             console.log('=== Target Nodes Summary ===');
                             targetNodes.forEach(nodeName => {
@@ -312,28 +348,28 @@
                                 }
                             });
                             console.log('============================');
-                            
+
                             this.scene.add(this.model);
-                            
+
                             // Center model
                             const box = new THREE.Box3().setFromObject(this.model);
                             const center = box.getCenter(new THREE.Vector3());
                             this.model.position.sub(center);
 
                             // 180 degrees in radians
-                            this.model.rotation.y = Math.PI /1.25;
-                            
-                            
+                            this.model.rotation.y = Math.PI / 1.25;
+
+
                             // Store model dimensions for positioning hotspots
                             const size = box.getSize(new THREE.Vector3());
                             this.modelSize = size;
-                            
+
                             // Adjust camera
                             const maxDim = Math.max(size.x, size.y, size.z);
                             const fov = this.camera.fov * (Math.PI / 180);
                             let cameraZ = Math.abs(maxDim / Math.tan(fov / 2));
                             this.camera.position.set(0, 0, cameraZ * .5);
-                    
+
 
                             this.camera.lookAt(0, 0, 0);
                             this.camera.updateProjectionMatrix();
@@ -341,7 +377,21 @@
                             this.initialCameraTarget = new THREE.Vector3(0, 0, 0);
                             // Create hotspots after model is loaded
                             this.createDefaultHotspots();
-                            
+
+                            // In the model loading section, add this after loading the model:
+                            this.model.traverse((node) => {
+                                if (node.isMesh) {
+                                    node.castShadow = true;
+                                    node.receiveShadow = true;
+                                    
+                                    // Make sure materials are set up for shadows
+                                    if (node.material) {
+                                        node.material.shadowSide = THREE.FrontSide;
+                                        node.material.needsUpdate = true;
+                                    }
+                                }
+                            });
+
                             resolve();
                         },
                         (xhr) => {
@@ -354,7 +404,7 @@
                     );
                 });
             }
-            
+
 
 
             clearAllVariants() {
@@ -387,7 +437,7 @@
 
 
             async createDefaultHotspots() {
-                
+
                 const response = await fetch('hotspots.json');
                 const hotspotDataList = await response.json();
                 // 🔎 Filter camera hotspots from JSON
@@ -404,30 +454,39 @@
                     container.className = "cam-btn-container";
 
                     // 🎛️ Button with SVG icon
-                    const btn = document.createElement("button");
-                    btn.className = "cam-btn";
+                    // const btn = document.createElement("span");
+                    // btn.className = "cam-btn-text";
+                    // btn.textcontent = camData.title
 
-                    const img = document.createElement("img");
-                    img.src = camData.icon?.default || 'media/default_view.svg';
-                    img.alt = camData.title;
-                    img.className = "cam-btn-icon";
-                    btn.appendChild(img);
+                    // const img = document.createElement("img");
+                    // img.src = camData.icon?.default || 'media/default_view.svg';
+                    // img.alt = camData.title;
+                    // img.className = "cam-btn-icon";
+                    // btn.appendChild(img);
 
                     // 🏷️ Label next to button
                     const label = document.createElement("span");
                     label.textContent = camData.title;
                     label.className = "cam-btn-label";
 
-                    // 👂 Hover icon swap
-                    btn.addEventListener("mouseenter", () => {
-                        if (camData.icon?.hover) img.src = camData.icon.hover;
-                    });
-                    btn.addEventListener("mouseleave", () => {
-                        img.src = camData.icon?.default || 'media/default_view.svg';
-                    });
+                    // 🎨 Hover effect on mouse enter/leave
+                    // container.addEventListener("mouseenter", () => {
+                    //     container.style.backgroundColor = "orange";
+                    //     btn.style.color = "white";
+                    // });
+
+                    // container.addEventListener("mouseleave", () => {
+                    //     container.style.backgroundColor = "#d4d4d4"; // default background
+                    //     btn.style.color = "#363D47"; // default text color
+                    // });
 
                     // 🧭 Camera movement on click
-                    btn.addEventListener("click", () => {
+                    container.addEventListener("click", () => {
+                        document.querySelectorAll(".cam-btn-container.active").forEach(el => {
+                            el.classList.remove("active");
+                        });
+
+                        container.classList.add("active");
                         const cameraNode = this.model.getObjectByName(camData.camera);
                         if (!cameraNode || !cameraNode.isCamera) {
                             console.warn('❌ Camera not found:', camData.camera);
@@ -465,22 +524,38 @@
                     });
 
                     // 📦 Append elements
-                    container.appendChild(btn);
+                    //container.appendChild(btn);
                     container.appendChild(label);
                     cameraControls.appendChild(container);
                 });
 
+                //when click on others cam-btn set back to default
+                document.addEventListener("click", (e) => {
+                    const clickedInside = e.target.closest(".cam-btn-container");
+                    if (!clickedInside) {
+                        document.querySelectorAll(".cam-btn-container.active").forEach(el => {
+                            el.classList.remove("active");
+                        });
+                    }
+                });
 
 
                 hotspotDataList.forEach(hotspotData => {
-                    let node = this.model.getObjectByName(hotspotData.node);
+                    // Skip creating visual elements for camera-type hotspots
+                    if (hotspotData.type === 'camera') {
+                        return;
+                    }
 
+                    let node = this.model.getObjectByName(hotspotData.node);
 
                     if (!node) {
                         this.model.traverse(child => {
                             if (!node && child.name.startsWith(hotspotData.node)) {
                                 node = child;
                             }
+                            if (child.isMesh) {
+    child.castShadow = true;
+  }
                         });
                     }
 
@@ -494,8 +569,8 @@
 
                     const hotspotDiv = document.createElement('div');
                     hotspotDiv.className = 'hotspot';
-                    hotspotDiv.style.backgroundImage = hotspotData.type === 'animation' 
-                        ? `url('media/door_default.png')` 
+                    hotspotDiv.style.backgroundImage = hotspotData.type === 'animation'
+                        ? `url('media/door_default.png')`
                         : `url('media/Info_Default.png')`;
                     document.body.appendChild(hotspotDiv);
 
@@ -533,8 +608,8 @@
                             this.visitedHotspots.add(this.selectedHotspot);
                             this.selectedHotspot.element.style.backgroundImage =
                                 this.selectedHotspot.data.type === 'animation' ?
-                                `url('media/door_visited.png')` :
-                                `url('media/Info_Visited.png')`;
+                                    `url('media/door_visited.png')` :
+                                    `url('media/Info_Visited.png')`;
                             this.selectedHotspot.info.style.display = 'none';
                             this.selectedHotspot.info.classList.remove('active');
                         }
@@ -589,13 +664,13 @@
                             // fallback: orbit to hotspot
                             this.moveToHotspotView(hotspot);
                         }
-                        
+
 
                         if (hotspotData.type === "animation" && hotspotData.animation) {
                             hotspotDiv.style.backgroundImage = `url('media/Door_Selected.png')`;
 
                             // ✅ Clear all material variants
-                            this.clearAllVariants(); 
+                            this.clearAllVariants();
 
                             // Support multiple animations separated by comma
                             const animationNames = hotspotData.animation.split(',').map(name => name.trim());
@@ -631,7 +706,7 @@
                                 //show object after animation play with a deal
                                 if (clip.name === "DoorOpen_CableBin" && this.cableContentsObject) {
                                     // Clear any existing timeout to prevent overlapping
-                                        clearTimeout(this._cableShowTimeout);
+                                    clearTimeout(this._cableShowTimeout);
 
                                     if (hotspot._direction === 1) {
                                         // Forward: delay 60 frames (~1000ms)
@@ -643,7 +718,7 @@
                                         this.cableContentsObject.visible = false;
                                     }
                                 }
-                                
+
 
                                 console.log(`🎬 ${hotspotData.title} > ${animName} (${hotspot._direction === 1 ? 'forward' : 'reverse'})`);
                             });
@@ -794,50 +869,50 @@
                     console.warn(`❌ No camera node found for: ${camNodeName}`);
                 }
             }
-moveCameraTo(positionArray, quaternionArray) {
-    const startPos = this.camera.position.clone();
-    const startQuat = this.camera.quaternion.clone();
+            moveCameraTo(positionArray, quaternionArray) {
+                const startPos = this.camera.position.clone();
+                const startQuat = this.camera.quaternion.clone();
 
-    const targetPos = new THREE.Vector3().fromArray(positionArray);
-    const targetQuat = new THREE.Quaternion().fromArray(quaternionArray);
+                const targetPos = new THREE.Vector3().fromArray(positionArray);
+                const targetQuat = new THREE.Quaternion().fromArray(quaternionArray);
 
-    const startTarget = this.controls.target.clone();
-    const endTarget = new THREE.Vector3(0, 0, -1).applyQuaternion(targetQuat).add(targetPos);
+                const startTarget = this.controls.target.clone();
+                const endTarget = new THREE.Vector3(0, 0, -1).applyQuaternion(targetQuat).add(targetPos);
 
-    const duration = 1000;
-    const startTime = Date.now();
+                const duration = 1000;
+                const startTime = Date.now();
 
-    const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const t = Math.min(elapsed / duration, 1);
-        const ease = 1 - Math.pow(1 - t, 4);
+                const animate = () => {
+                    const elapsed = Date.now() - startTime;
+                    const t = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - t, 4);
 
-        this.camera.position.lerpVectors(startPos, targetPos, ease);
-        this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
-        this.controls.target.lerpVectors(startTarget, endTarget, ease);
-        this.controls.update();
+                    this.camera.position.lerpVectors(startPos, targetPos, ease);
+                    this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
+                    this.controls.target.lerpVectors(startTarget, endTarget, ease);
+                    this.controls.update();
 
-        if (t < 1) requestAnimationFrame(animate);
-    };
+                    if (t < 1) requestAnimationFrame(animate);
+                };
 
-    animate();
-}
+                animate();
+            }
 
             updateHotspotPositions() {
                 if (!this.hotspots) return;
-                
+
                 this.hotspots.forEach(hotspot => {
                     // Get the world position of the hotspot mesh
                     const worldPosition = new THREE.Vector3();
                     hotspot.mesh.getWorldPosition(worldPosition);
-                    
+
                     // Project the world position to screen coordinates
                     const screenPosition = worldPosition.clone().project(this.camera);
-                    
+
                     // Check if the point is in front of the camera and within view bounds
                     const isBehindCamera = screenPosition.z > 1;
-                    const isInView = screenPosition.x >= -1 && screenPosition.x <= 1 && 
-                                   screenPosition.y >= -1 && screenPosition.y <= 1;
+                    const isInView = screenPosition.x >= -1 && screenPosition.x <= 1 &&
+                        screenPosition.y >= -1 && screenPosition.y <= 1;
 
                     // Convert to screen coordinates
                     const x = (screenPosition.x + 1) * window.innerWidth / 2;
@@ -847,13 +922,13 @@ moveCameraTo(positionArray, quaternionArray) {
                     const raycaster = new THREE.Raycaster();
                     const direction = worldPosition.clone().sub(this.camera.position).normalize();
                     raycaster.set(this.camera.position, direction);
-                    
+
                     // Get all intersections between camera and hotspot position
                     const intersects = raycaster.intersectObjects(this.scene.children, true);
-                    
+
                     // Calculate distance to hotspot
                     const distanceToHotspot = this.camera.position.distanceTo(worldPosition);
-                    
+
                     // Check if hotspot is occluded by comparing distances
                     const isOccluded = intersects.length > 0 && intersects[0].distance < distanceToHotspot - 0.1;
 
@@ -942,16 +1017,16 @@ moveCameraTo(positionArray, quaternionArray) {
 
                     // Reset button icon after click
                     setTimeout(() => {
-                        icon.src = 'media/reset_default.png';
+                        icon.src = 'media/reset_default.svg';
                     }, 150);
                 });
 
                 button.addEventListener('mouseenter', () => {
-                    icon.src = 'media/reset_active.png';
+                    icon.src = 'media/reset_active.svg';
                 });
 
                 button.addEventListener('mouseleave', () => {
-                    icon.src = 'media/reset_default.png';
+                    icon.src = 'media/reset_default.svg';
                 });
             }
 
@@ -971,19 +1046,38 @@ moveCameraTo(positionArray, quaternionArray) {
                         const specs = await response.json();
                         content.innerHTML = '';
 
-                        for (const key in specs) {
-                            const row = document.createElement('p');
-                            row.innerHTML = `<strong>${key}:</strong> ${specs[key]}`;
-                            content.appendChild(row);
+                        for (const [key, value] of Object.entries(specs)) {
+                            if (value === "") {
+                                const section = document.createElement('h2');
+                                section.className = 'spec-section';
+                                section.textContent = key;
+                                content.appendChild(section);
+                            } else {
+                                const item = document.createElement('div');
+                                item.className = 'spec-item';
+
+                                const label = document.createElement('span');
+                                label.className = 'spec-label';
+                                label.textContent = `${key}:`;
+
+                                const val = document.createElement('span');
+                                val.className = 'spec-value';
+                                val.textContent = value;
+
+                                item.appendChild(label);
+                                item.appendChild(val);
+                                content.appendChild(item);
+                            }
                         }
 
+
                         modal.style.display = 'block';
-                        icon.src = 'media/spec_active.png';
+                        icon.src = 'media/spec_active.svg';
                         isVisible = true;
                     } catch (err) {
                         content.innerHTML = '<p>Error loading specs.</p>';
                         modal.style.display = 'block';
-                        icon.src = 'media/spec_active.png';
+                        icon.src = 'media/spec_active.svg';
                         isVisible = true;
                         console.error(err);
                     }
@@ -991,7 +1085,7 @@ moveCameraTo(positionArray, quaternionArray) {
 
                 const hideSpecs = () => {
                     modal.style.display = 'none';
-                    icon.src = 'media/spec_default.png';
+                    icon.src = 'media/spec_default.svg';
                     isVisible = false;
                 };
 
@@ -1006,11 +1100,11 @@ moveCameraTo(positionArray, quaternionArray) {
                 closeIcon.addEventListener('click', hideSpecs);
 
                 button.addEventListener('mouseenter', () => {
-                    if (!isVisible) icon.src = 'media/spec_active.png';
+                    if (!isVisible) icon.src = 'media/spec_active.svg';
                 });
 
                 button.addEventListener('mouseleave', () => {
-                    if (!isVisible) icon.src = 'media/spec_default.png';
+                    if (!isVisible) icon.src = 'media/spec_default.svg';
                 });
             }
 
@@ -1032,4 +1126,5 @@ moveCameraTo(positionArray, quaternionArray) {
         new HotspotManager();
     </script>
 </body>
+
 </html>
