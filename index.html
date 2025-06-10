@@ -45,6 +45,18 @@
 
 
     </div>
+
+    <!-- Add navigation UI -->
+    <div class="navigation-ui">
+        <button id="prevHotspotBtn" class="nav-button prev-button" title="Previous">
+            <img src="media/arrow_left.svg" alt="Previous">
+        </button>
+        <div id="currentHotspotTitle" class="hotspot-title-display"></div>
+        <button id="nextHotspotBtn" class="nav-button next-button" title="Next">
+            <img src="media/arrow_right.svg" alt="Next">
+        </button>
+    </div>
+
     <div id="cameraControls"></div>
 
 
@@ -79,6 +91,7 @@
                 this.doorHotspots = [];
                 this.hotspotsData = null;
                 this.selectedHotspot = null;
+                this.currentHotspotIndex = 0;
             }
 
             async init() {
@@ -437,9 +450,15 @@
 
 
             async createDefaultHotspots() {
-
                 const response = await fetch('hotspots.json');
                 const hotspotDataList = await response.json();
+                
+                // Store the full list of hotspots for navigation
+                this.allHotspots = hotspotDataList.filter(h => h.type !== 'camera');
+                
+                // Setup navigation buttons
+                this.setupNavigationButtons();
+                
                 // 🔎 Filter camera hotspots from JSON
                 const cameraHotspots = hotspotDataList.filter(h => h.type === 'camera');
 
@@ -763,6 +782,48 @@
                         }
                     });
                 });
+            }
+
+            setupNavigationButtons() {
+                const prevBtn = document.getElementById('prevHotspotBtn');
+                const nextBtn = document.getElementById('nextHotspotBtn');
+                const titleDisplay = document.getElementById('currentHotspotTitle');
+
+                const updateTitleDisplay = () => {
+                    if (this.allHotspots && this.allHotspots.length > 0) {
+                        titleDisplay.innerHTML = `<span>${this.allHotspots[this.currentHotspotIndex].title}</span>`;
+                    }
+                };
+
+                const navigateToHotspot = (index) => {
+                    if (!this.allHotspots || this.allHotspots.length === 0) return;
+                    
+                    // Update current index with wraparound
+                    this.currentHotspotIndex = (index + this.allHotspots.length) % this.allHotspots.length;
+                    
+                    // Get the hotspot data
+                    const hotspotData = this.allHotspots[this.currentHotspotIndex];
+                    
+                    // Find the corresponding hotspot element
+                    const hotspot = this.hotspots.find(h => h.data === hotspotData);
+                    if (hotspot) {
+                        // Simulate click on the hotspot
+                        hotspot.element.click();
+                    }
+                    
+                    updateTitleDisplay();
+                };
+
+                prevBtn.addEventListener('click', () => {
+                    navigateToHotspot(this.currentHotspotIndex - 1);
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    navigateToHotspot(this.currentHotspotIndex + 1);
+                });
+
+                // Initial title display
+                updateTitleDisplay();
             }
 
             switchToNamedCamera(cameraName) {
