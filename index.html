@@ -8,6 +8,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Force landscape orientation only on mobile/tablet devices */
+        @media (hover: none) and (pointer: coarse) {
+            @media screen and (orientation: portrait) {
+                html {
+                    transform: rotate(-90deg);
+                    transform-origin: left top;
+                    width: 100vh;
+                    height: 100vw;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                }
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -80,8 +96,17 @@
         import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
         import { Mesh } from 'three';
 
-
-
+        // Force landscape orientation only on mobile/tablet devices
+        if (window.screen && window.screen.orientation && 
+            ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+            try {
+                window.screen.orientation.lock('landscape').catch(function(error) {
+                    console.log('Orientation lock failed:', error);
+                });
+            } catch (error) {
+                console.log('Screen Orientation API not supported:', error);
+            }
+        }
 
         class HotspotManager {
             constructor() {
@@ -262,7 +287,7 @@
                     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                     this.loader.setDRACOLoader(dracoLoader);
 
-                    const modelPath = 'media/model/scene-v2.glb';
+                    const modelPath = 'media/model/scene-v2-v1.glb';
                     console.log('Loading model from:', modelPath);
 
 
