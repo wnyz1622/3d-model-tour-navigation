@@ -280,7 +280,7 @@ canvas {
   } */
 .button-column {
     position: absolute;
-    bottom: 28px;
+    bottom: 100px;
     left: 20px;
     display: flex;
     flex-direction: column;
