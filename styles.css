@@ -75,7 +75,7 @@ canvas {
     color: white;
     padding: 21px;
     kerning: 1;
-
+    outline: 1px solid #9e9e9ead;
     border-radius: 6px;
     font-family: 'Noto Sans', sans-serif;
     pointer-events: none;

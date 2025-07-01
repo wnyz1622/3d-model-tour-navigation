@@ -263,7 +263,7 @@
                     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                     this.loader.setDRACOLoader(dracoLoader);
 
-                    const modelPath = 'media/model/scene-v2-v1.glb';
+                    const modelPath = 'media/model/scene-v3-v1.glb';
                     console.log('Loading model from:', modelPath);
 
 
@@ -419,8 +419,6 @@
                 });
             }
 
-
-
             clearAllVariants() {
                 if (!this.gltf) return;
 
@@ -448,10 +446,10 @@
 
                 console.log('🔁 Reset all materials to their base (default) version');
             }
-
             handleHotspotClick(hotspot) {
                 const hotspotData = hotspot.data;
 
+                // Deselect previous
                 if (this.selectedHotspot && this.selectedHotspot !== hotspot) {
                     this.visitedHotspots.add(this.selectedHotspot);
                     this.selectedHotspot.element.style.backgroundImage =
@@ -464,57 +462,55 @@
 
                 this.selectedHotspot = hotspot;
                 this.visitedHotspots.add(hotspot);
+
+                // Update icon state
                 hotspot.element.style.backgroundImage = hotspotData.type === 'animation'
                     ? `url('media/door_selected.png')`
                     : `url('media/Info_Selected.png')`;
 
+                // ✅ Always show the info panel, including description
                 hotspot.info.style.display = 'block';
                 hotspot.info.classList.add('active');
+
                 this.applyMaterialVariant(hotspotData.node);
 
-                if (hotspotData.type === "animation" && hotspotData.animation) {
-                    // Animation handling here...
-                    // You can move the full animation logic here from the click event
+                // 🔁 Move to predefined camera position if available
+                const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
+                if (cameraNode && cameraNode.isCamera) {
+                    const endPos = new THREE.Vector3();
+                    cameraNode.getWorldPosition(endPos);
+
+                    const endQuat = new THREE.Quaternion();
+                    cameraNode.getWorldQuaternion(endQuat);
+
+                    const startPos = this.camera.position.clone();
+                    const startQuat = this.camera.quaternion.clone();
+                    const startTarget = this.controls.target.clone();
+                    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
+                    const target = endPos.clone().add(forward);
+
+                    const duration = 1500;
+                    const startTime = Date.now();
+
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const t = Math.min(elapsed / duration, 1);
+                        const ease = 1 - Math.pow(1 - t, 4);
+
+                        this.camera.position.lerpVectors(startPos, endPos, ease);
+                        this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
+                        this.controls.target.lerpVectors(startTarget, target, ease);
+                        this.controls.update();
+
+                        if (t < 1) requestAnimationFrame(animate);
+                    };
+
+                    animate();
+                } else {
+                    this.moveToHotspotView(hotspot);
                 }
 
-                const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
-if (cameraNode && cameraNode.isCamera) {
-    const endPos = new THREE.Vector3();
-    cameraNode.getWorldPosition(endPos);
-
-    const endQuat = new THREE.Quaternion();
-    cameraNode.getWorldQuaternion(endQuat);
-
-    const startPos = this.camera.position.clone();
-    const startQuat = this.camera.quaternion.clone();
-
-    const startTarget = this.controls.target.clone();
-    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
-    const target = endPos.clone().add(forward);
-
-    const duration = 1500;
-    const startTime = Date.now();
-
-    const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const t = Math.min(elapsed / duration, 1);
-        const ease = 1 - Math.pow(1 - t, 4);
-
-        this.camera.position.lerpVectors(startPos, endPos, ease);
-        this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
-        this.controls.target.lerpVectors(startTarget, target, ease);
-        this.controls.update();
-
-        if (t < 1) requestAnimationFrame(animate);
-    };
-
-    animate();
-} else {
-    this.moveToHotspotView(hotspot);
-}
-
-
-                // Sync nav title
+                // 🔁 Sync navigation index
                 const idx = this.allHotspots.findIndex(h => h.node === hotspotData.node);
                 if (idx !== -1) {
                     this.currentHotspotIndex = idx;
@@ -529,8 +525,6 @@ if (cameraNode && cameraNode.isCamera) {
                 // Store the full list of hotspots for navigation
                 this.allHotspots = hotspotDataList.filter(h => h.type !== 'camera');
 
-
-
                 // 🔎 Filter camera hotspots from JSON
                 const cameraHotspots = hotspotDataList.filter(h => h.type === 'camera');
 
@@ -540,38 +534,13 @@ if (cameraNode && cameraNode.isCamera) {
 
                 // 🔁 Generate buttons
                 cameraHotspots.forEach(camData => {
-                    // 🔲 Container for button + label
                     const container = document.createElement("div");
                     container.className = "cam-btn-container";
 
-                    // 🎛️ Button with SVG icon
-                    // const btn = document.createElement("span");
-                    // btn.className = "cam-btn-text";
-                    // btn.textcontent = camData.title
-
-                    // const img = document.createElement("img");
-                    // img.src = camData.icon?.default || 'media/default_view.svg';
-                    // img.alt = camData.title;
-                    // img.className = "cam-btn-icon";
-                    // btn.appendChild(img);
-
-                    // 🏷️ Label next to button
                     const label = document.createElement("span");
                     label.textContent = camData.title;
                     label.className = "cam-btn-label";
 
-                    // 🎨 Hover effect on mouse enter/leave
-                    // container.addEventListener("mouseenter", () => {
-                    //     container.style.backgroundColor = "orange";
-                    //     btn.style.color = "white";
-                    // });
-
-                    // container.addEventListener("mouseleave", () => {
-                    //     container.style.backgroundColor = "#d4d4d4"; // default background
-                    //     btn.style.color = "#363D47"; // default text color
-                    // });
-
-                    // 🧭 Camera movement on click
                     container.addEventListener("click", () => {
                         document.querySelectorAll(".cam-btn-container.active").forEach(el => {
                             el.classList.remove("active");
@@ -614,13 +583,10 @@ if (cameraNode && cameraNode.isCamera) {
                         animate();
                     });
 
-                    // 📦 Append elements
-                    //container.appendChild(btn);
                     container.appendChild(label);
                     cameraControls.appendChild(container);
                 });
 
-                //when click on others cam-btn set back to default
                 document.addEventListener("click", (e) => {
                     const clickedInside = e.target.closest(".cam-btn-container");
                     if (!clickedInside) {
@@ -630,15 +596,40 @@ if (cameraNode && cameraNode.isCamera) {
                     }
                 });
 
+                // Navigation buttons setup (merged here)
+                const prevBtn = document.getElementById('prevHotspotBtn');
+                const nextBtn = document.getElementById('nextHotspotBtn');
+                const titleDisplay = document.getElementById('currentHotspotTitle');
 
-                hotspotDataList.forEach(hotspotData => {
-                    // Skip creating visual elements for camera-type hotspots
-                    if (hotspotData.type === 'camera') {
-                        return;
+                // Set initial text
+                titleDisplay.textContent = "Click a hotspot or use arrows";
+
+                const navigateToHotspot = (index) => {
+                    if (!this.allHotspots || this.allHotspots.length === 0) return;
+
+                    this.currentHotspotIndex = (index + this.allHotspots.length) % this.allHotspots.length;
+
+                    const hotspotData = this.allHotspots[this.currentHotspotIndex];
+                    const hotspot = this.hotspots.find(h => h.data.node === hotspotData.node);
+                    if (hotspot) {
+                        this.handleHotspotClick(hotspot);
                     }
 
-                    let node = this.model.getObjectByName(hotspotData.node);
+                    this.updateTitleDisplay();
+                };
 
+                prevBtn.addEventListener('click', () => {
+                    navigateToHotspot(this.currentHotspotIndex - 1);
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    navigateToHotspot(this.currentHotspotIndex + 1);
+                });
+
+                hotspotDataList.forEach(hotspotData => {
+                    if (hotspotData.type === 'camera') return;
+
+                    let node = this.model.getObjectByName(hotspotData.node);
                     if (!node) {
                         this.model.traverse(child => {
                             if (!node && child.name.startsWith(hotspotData.node)) {
@@ -668,9 +659,9 @@ if (cameraNode && cameraNode.isCamera) {
                     const infoDiv = document.createElement('div');
                     infoDiv.className = 'hotspot-info';
                     infoDiv.innerHTML = `
-                        <div class="hotspot-title">${hotspotData.title}</div>
-                        <div class="hotspot-description">${hotspotData.description}</div>
-                    `;
+            <div class="hotspot-title">${hotspotData.title}</div>
+            <div class="hotspot-description">${hotspotData.description}</div>
+        `;
                     document.body.appendChild(infoDiv);
 
                     const geometry = new THREE.SphereGeometry(0.01);
@@ -692,7 +683,8 @@ if (cameraNode && cameraNode.isCamera) {
                         this.visitedHotspots = new Set();
                     }
 
-                    hotspotDiv.addEventListener('click', () => {this.handleHotspotClick(hotspot);
+                    hotspotDiv.addEventListener('click', () => {
+                        this.handleHotspotClick(hotspot);
                     });
 
                     hotspotDiv.addEventListener('mouseenter', () => {
@@ -703,11 +695,6 @@ if (cameraNode && cameraNode.isCamera) {
                         }
 
                         infoDiv.style.display = 'block';
-                        if (this.selectedHotspot === hotspot) {
-                            infoDiv.classList.add('active');
-                        } else {
-                            infoDiv.classList.remove('active');
-                        }
                     });
 
                     hotspotDiv.addEventListener('mouseleave', () => {
@@ -730,45 +717,6 @@ if (cameraNode && cameraNode.isCamera) {
                         }
                     });
                 });
-                // Setup navigation buttons
-                this.setupNavigationButtons();
-            }
-
-            setupNavigationButtons() {
-                const prevBtn = document.getElementById('prevHotspotBtn');
-                const nextBtn = document.getElementById('nextHotspotBtn');
-                const titleDisplay = document.getElementById('currentHotspotTitle');
-
-                const navigateToHotspot = (index) => {
-                    if (!this.allHotspots || this.allHotspots.length === 0) return;
-
-                    // Update current index with wraparound
-                    this.currentHotspotIndex = (index + this.allHotspots.length) % this.allHotspots.length;
-
-                    // Get the hotspot data
-                    const hotspotData = this.allHotspots[this.currentHotspotIndex];
-
-                    // Find the corresponding hotspot element
-                    const hotspot = this.hotspots.find(h => h.data.node === hotspotData.node);
-if (hotspot) {
-    this.handleHotspotClick(hotspot); // not hotspotData!
-}
-
-
-                    this.updateTitleDisplay();
-
-                };
-
-                prevBtn.addEventListener('click', () => {
-                    navigateToHotspot(this.currentHotspotIndex - 1);
-                });
-
-                nextBtn.addEventListener('click', () => {
-                    navigateToHotspot(this.currentHotspotIndex + 1);
-                });
-
-                // Initial title display
-                this.updateTitleDisplay();
             }
 
             updateTitleDisplay() {
@@ -953,8 +901,15 @@ if (hotspot) {
                         hotspot.element.style.display = 'block';
                         //hotspot.description.style.display = 'block';
                         // Only show info if hovering
-                        if (hotspot.element.matches(':hover')) {
+                        if (hotspot === this.selectedHotspot) {
                             hotspot.info.style.display = 'block';
+                            hotspot.info.classList.add('active');
+                        } else if (hotspot.element.matches(':hover')) {
+                            hotspot.info.style.display = 'block';
+                            hotspot.info.classList.remove('active');
+                        } else {
+                            hotspot.info.style.display = 'none';
+                            hotspot.info.classList.remove('active');
                         }
 
                     }
