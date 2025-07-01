@@ -103,7 +103,7 @@
                 rgbeLoader.load('media/model/cannon_1k.hdr', (hdrTexture) => {
                     hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
                     this.scene.environment = hdrTexture;
-                    
+
                     //this.scene.background = hdrTexture;
                 });
 
@@ -142,15 +142,16 @@
                 directionalLight.castShadow = true;
 
                 // Add these shadow properties
-                directionalLight.shadow.mapSize.width = 2048;
-                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.mapSize.width = 512;
+                directionalLight.shadow.mapSize.height = 512;
+                directionalLight.shadow.radius = 4;
+                directionalLight.shadow.bias = -0.001;
                 directionalLight.shadow.camera.near = 0.5;
                 directionalLight.shadow.camera.far = 100;
                 directionalLight.shadow.camera.left = -25;
                 directionalLight.shadow.camera.right = 25;
                 directionalLight.shadow.camera.top = 25;
                 directionalLight.shadow.camera.bottom = -25;
-                directionalLight.shadow.bias = -0.0005;
                 directionalLight.shadow.normalBias = 0.02;
                 this.scene.add(directionalLight);
 
@@ -159,7 +160,7 @@
                 const floorMaterial = new THREE.MeshStandardMaterial({
                     color: 0xbbbbbb,
                     transparent: true,
-                    opacity: .7, 
+                    opacity: .7,
                     roughness: 1.0,
                     metalness: 0.0,
                     side: THREE.DoubleSide
@@ -396,7 +397,7 @@
                                 if (node.isMesh) {
                                     node.castShadow = true;
                                     node.receiveShadow = true;
-                                    
+
                                     // Make sure materials are set up for shadows
                                     if (node.material) {
                                         node.material.shadowSide = THREE.FrontSide;
@@ -452,13 +453,13 @@
             async createDefaultHotspots() {
                 const response = await fetch('hotspots.json');
                 const hotspotDataList = await response.json();
-                
+
                 // Store the full list of hotspots for navigation
                 this.allHotspots = hotspotDataList.filter(h => h.type !== 'camera');
-                
+
                 // Setup navigation buttons
                 this.setupNavigationButtons();
-                
+
                 // 🔎 Filter camera hotspots from JSON
                 const cameraHotspots = hotspotDataList.filter(h => h.type === 'camera');
 
@@ -573,8 +574,8 @@
                                 node = child;
                             }
                             if (child.isMesh) {
-    child.castShadow = true;
-  }
+                                child.castShadow = true;
+                            }
                         });
                     }
 
@@ -745,6 +746,14 @@
 
                             this.moveToHotspotView(hotspot);
                         }
+
+                        // --- Sync navigation index and title with manual click ---
+                        const idx = this.allHotspots.findIndex(h => h.node === hotspotData.node);
+                        if (idx !== -1) {
+                            this.currentHotspotIndex = idx;
+                            this.updateTitleDisplay();
+                        }
+                        // --- End sync ---
                     });
 
                     hotspotDiv.addEventListener('mouseenter', () => {
@@ -789,29 +798,29 @@
                 const nextBtn = document.getElementById('nextHotspotBtn');
                 const titleDisplay = document.getElementById('currentHotspotTitle');
 
-                const updateTitleDisplay = () => {
-                    if (this.allHotspots && this.allHotspots.length > 0) {
-                        titleDisplay.innerHTML = `<span>${this.allHotspots[this.currentHotspotIndex].title}</span>`;
-                    }
-                };
-
                 const navigateToHotspot = (index) => {
                     if (!this.allHotspots || this.allHotspots.length === 0) return;
-                    
+
                     // Update current index with wraparound
                     this.currentHotspotIndex = (index + this.allHotspots.length) % this.allHotspots.length;
-                    
+
                     // Get the hotspot data
                     const hotspotData = this.allHotspots[this.currentHotspotIndex];
-                    
+
                     // Find the corresponding hotspot element
-                    const hotspot = this.hotspots.find(h => h.data === hotspotData);
+                    const hotspot = this.hotspots.find(h => h.data.node === hotspotData.node);
                     if (hotspot) {
                         // Simulate click on the hotspot
                         hotspot.element.click();
+                        // Ensure info box is visible and active
+                        //hotspot.element.style.display = 'block';
+                        hotspot.info.style.display = 'block';
+                        hotspot.info.classList.add('active');
                     }
-                    
-                    updateTitleDisplay();
+
+
+                    this.updateTitleDisplay();
+
                 };
 
                 prevBtn.addEventListener('click', () => {
@@ -823,7 +832,14 @@
                 });
 
                 // Initial title display
-                updateTitleDisplay();
+                this.updateTitleDisplay();
+            }
+
+            updateTitleDisplay() {
+                const titleDisplay = document.getElementById('currentHotspotTitle');
+                if (this.allHotspots && this.allHotspots.length > 0) {
+                    titleDisplay.innerHTML = `<span>${this.allHotspots[this.currentHotspotIndex].title}</span>`;
+                }
             }
 
             switchToNamedCamera(cameraName) {
