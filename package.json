@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "postprocessing": "^6.37.4",
+    "three": "^0.177.0"
+  }
+}

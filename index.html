@@ -81,6 +81,9 @@
         import { Mesh } from 'three';
 
 
+        import { EffectComposer, RenderPass, EffectPass, OutlineEffect, BlendFunction } from 'postprocessing';
+
+
 
 
         class HotspotManager {
@@ -154,6 +157,31 @@
                 directionalLight.shadow.camera.bottom = -25;
                 directionalLight.shadow.normalBias = 0.02;
                 this.scene.add(directionalLight);
+                //composer
+                this.composer = new EffectComposer(this.renderer);
+                this.composer.addPass(new RenderPass(this.scene, this.camera));
+                // Postprocessing passes
+
+
+                // Create OutlineEffect
+                this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
+                    selection: [], // <- safer than using null
+                    blendFunction: BlendFunction.ALPHA,
+                    edgeStrength: 130,
+                    pulseSpeed: 0.0,
+                    visibleEdgeColor: new THREE.Color('#EF5337'), // ← This sets the outline color
+                    hiddenEdgeColor: new THREE.Color(0x000000), 
+                    //blur: true,
+                    //width: 10,
+                    multisampling:4,
+                    resolution: 1080,
+                    xRay: false
+                });
+
+                const effectPass = new EffectPass(this.camera, this.outlineEffect);
+                effectPass.renderToScreen = true;
+                this.composer.addPass(effectPass);
+                //this.composer.render();
 
                 // Add floor disc
                 const floorGeometry = new THREE.CircleGeometry(25, 48);
@@ -216,6 +244,13 @@
                 this.setupTechSpecToggle();
                 this.setupResetButton();
 
+                //test outliene box
+                const test = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+                );
+                this.scene.add(test);
+                this.outlineEffect.selection.set([test]);
 
                 // Start animation loop
                 this.clock = new THREE.Clock();
@@ -461,6 +496,7 @@
                 }
 
                 this.selectedHotspot = hotspot;
+
                 this.visitedHotspots.add(hotspot);
 
                 // Update icon state
@@ -472,7 +508,7 @@
                 hotspot.info.style.display = 'block';
                 hotspot.info.classList.add('active');
 
-                this.applyMaterialVariant(hotspotData.node);
+                //this.applyMaterialVariant(hotspotData.node);
 
                 // 🔁 Move to predefined camera position if available
                 const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
@@ -510,6 +546,31 @@
                     this.moveToHotspotView(hotspot);
                 }
 
+                //outline seleected mesh
+                const meshToOutline = this.model.getObjectByName(hotspotData.node);
+
+                if (meshToOutline && meshToOutline.isMesh) {
+                    this.outlineEffect.selection.set([meshToOutline]);
+                    console.log('✔ Outline applied to:', meshToOutline.name);
+                } else if (meshToOutline) {
+                    // If it's a group, find a mesh inside
+                    let childMesh = null;
+                    meshToOutline.traverse(child => {
+                        if (child.isMesh && !childMesh) {
+                            childMesh = child;
+                        }
+                    });
+
+                    if (childMesh) {
+                        this.outlineEffect.selection.set([childMesh]);
+                        console.log('✔ Outline applied to child mesh:', childMesh.name);
+                    } else {
+                        console.warn('❌ No mesh found to apply outline for:', hotspotData.node);
+                    }
+                } else {
+                    console.warn('❌ Node not found in model:', hotspotData.node);
+                }               
+                
                 // 🔁 Sync navigation index
                 const idx = this.allHotspots.findIndex(h => h.node === hotspotData.node);
                 if (idx !== -1) {
@@ -1083,8 +1144,8 @@
                 requestAnimationFrame(this.animate.bind(this));
                 this.controls.update();
                 this.updateHotspotPositions();
-                this.renderer.render(this.scene, this.camera);
-
+                //this.renderer.render(this.scene, this.camera);
+                this.composer.render();
                 if (this.mixer) {
                     const delta = this.clock.getDelta();
                     this.mixer.update(delta);
