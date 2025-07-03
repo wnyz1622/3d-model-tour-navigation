@@ -94,10 +94,10 @@ import './styles.css';
                 this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
                     selection: [], // <- safer than using null
                     blendFunction: BlendFunction.ALPHA,
-                    edgeStrength: 130,
+                    edgeStrength: 5,
                     pulseSpeed: 0.0,
                     visibleEdgeColor: new THREE.Color('#EF5337'), // ← This sets the outline color
-                    hiddenEdgeColor: new THREE.Color(0x000000),
+                    hiddenEdgeColor: new THREE.Color('#EF5337'),
                     //blur: true,
                     //width: 10,
                     multisampling: 4,
@@ -172,12 +172,12 @@ import './styles.css';
                 this.setupResetButton();
 
                 //test outliene box
-                const test = new THREE.Mesh(
-                    new THREE.BoxGeometry(1, 1, 1),
-                    new THREE.MeshStandardMaterial({ color: 0x00ff00 })
-                );
-                this.scene.add(test);
-                this.outlineEffect.selection.set([test]);
+                // const test = new THREE.Mesh(
+                //     new THREE.BoxGeometry(1, 1, 1),
+                //     new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+                // );
+                // this.scene.add(test);
+                // this.outlineEffect.selection.set([test]);
 
                 // Start animation loop
                 this.clock = new THREE.Clock();
@@ -225,7 +225,7 @@ import './styles.css';
                     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                     this.loader.setDRACOLoader(dracoLoader);
 
-                    const modelPath = 'media/model/scene-v3-v1.glb';
+                    const modelPath = 'media/model/scene-v3-v2.glb';
                     console.log('Loading model from:', modelPath);
 
 
@@ -408,6 +408,7 @@ import './styles.css';
 
                 console.log('🔁 Reset all materials to their base (default) version');
             }
+
             handleHotspotClick(hotspot) {
                 const hotspotData = hotspot.data;
 
@@ -905,9 +906,18 @@ import './styles.css';
                     // Update positions immediately without smoothing
                     hotspot.element.style.left = `${x}px`;
                     hotspot.element.style.top = `${y}px`;
-                    hotspot.info.style.left = `${x + 20}px`;
-                    hotspot.info.style.top = `${y}px`;
-
+                    //hotspot.info.style.left = `${x + 20}px`;
+                    //hotspot.info.style.top = `${y}px`;
+                    if (window.innerWidth < 600) {
+                        hotspot.info.classList.add('mobile-fixed');
+                      }else if (window.innerHeight < 400) {
+                        hotspot.info.classList.add('mobile-fixed');
+                      } else {
+                        //hotspot.info.classList.remove('mobile-fixed');
+                        hotspot.info.style.left = `${x + 20}px`;
+                        hotspot.info.style.top = `${y}px`;
+                      }
+                      
                 });
             }
 

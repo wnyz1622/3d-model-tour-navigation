@@ -68,6 +68,7 @@ canvas {
     transform: scale(1.2);
 }
 
+/* description panel */
 .hotspot-info {
     position: absolute;
     background: #363D47;
@@ -100,6 +101,7 @@ canvas {
     white-space: normal;
 }
 
+
 .hotspot-title {
     font-weight: 500;
     font-size: 14pt;
@@ -121,8 +123,49 @@ canvas {
 .hotspot-info.active .hotspot-description {
     display: block;
 }
+@media (max-width: 600px) {
+    .hotspot-info.mobile-fixed {
+      position: fixed;
+      bottom: 0;
+      
+      height: 220px;
+      transform: none;
+      padding: 21px;
+      border-radius: 0;
+      z-index: 1002;
+    }
+    .hotspot-description {
+        font-size: 10pt; /* or 14px or smaller if needed */
+        line-height: 1.2em;
+      }
+    
+      .hotspot-title {
+        font-size: 12pt;
+      }
+  }
 
-
+  @media (max-width: 900px) and (orientation: landscape) {
+    .hotspot-info.mobile-fixed {
+      bottom: 0px;
+      top:56px;
+      width: 180px;
+      right:0px;
+      font-size: 0.9em;
+      border-radius: 0;
+      padding: 21px;
+      overflow-y: auto; /* scroll if text is long */
+    }
+  
+    .hotspot-description {
+      font-size: 10pt;
+      line-height: 1.3em;
+    }
+  
+    .hotspot-title {
+      font-size: 12pt;
+    }
+  }
+  
 .loading-screen {
     position: fixed;
     top: 0;
@@ -286,7 +329,7 @@ canvas {
     flex-direction: column;
     gap: 10px;
     /* spacing between buttons */
-    z-index: 1000;
+    z-index: 1002;
 }
 
 /* Icon button layout (if not already defined) */
@@ -436,7 +479,7 @@ canvas {
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 1000;
+    z-index: 1003;
 }
 
 .nav-button {
