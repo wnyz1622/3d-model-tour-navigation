@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Vestergaard Elephant Beta 3D Tour</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+  <script type="module" crossorigin src="/assets/index-BJNHldst.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Bt-TqiN4.css">
+</head>
+
+<body>
+    <div class="top-header">
+        <img src="/assets/logo-CIFJ4WgP.png" alt="Logo" class="logo" />
+        <h1 class="header-title">Vestergaard Elephant Beta</h1>
+
+    </div>
+    <div id="container"></div>
+
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <h2>Loading...</h2>
+            <div class="progress-bar">
+                <div id="progress" class="progress"></div>
+            </div>
+        </div>
+    </div>
+    <div id="specModal">
+        <h2 style="margin-top: 0;">Technical Specifications</h2>
+        <img id="closeSpecIcon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAqCAYAAADf/ynVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAD5SURBVHgB7ZYxDoMwDEWdLjDCyJYr9Ag9eY/AEZKNEVYmGldpRSlEcQJIVf+TIkXGkZ8QdiACAAAAwH/Q933F66j8FxdJMheYpsm41bq9jsjXnOvzRXIiMc/gFhe8h+S81J1zKQGRWF3XwziON7e1IbmFlOUzfJYEKEqg6zpdFMW7sFKKC9stqaZpLAlJEtuS4/geUllia3I+rHOlssXoW472kGJSuvKDsiyjYlKy3tjyQ/fh537eEKeKrXUfx7e69RSx0EgIjZJDxWLm1B5yIjF/V7YUMRJW5K6S6Z/SlRVFjAR+Nru+xH8XYowxFa+j8gEAAADw4zwAxXHjQDr2A1IAAAAASUVORK5CYII=" alt="Close">
+        <div id="specContent"></div>
+    </div>
+    <div class="button-column">
+        <button id="techSpecBtn" title="Technical Specifications" class="icon-button techspec-btn">
+            <img id="techSpecIcon" src="data:image/svg+xml,%3csvg%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M11.7998%200.00012207C13.3596%200.00012207%2014.6795%201.0078%2015.1836%202.39954H20.2002C21.5201%202.39964%2022.5996%203.48001%2022.5996%204.79993V21.5997C22.5996%2022.9197%2021.5201%2024%2020.2002%2024.0001H3.40039C2.08039%2024.0001%201%2022.9197%201%2021.5997V4.79993C1.00003%203.47995%202.08041%202.39954%203.40039%202.39954H8.41602C8.9201%201.0078%2010.24%200.000205919%2011.7998%200.00012207ZM7%2016.7999C6.34002%2016.7999%205.7998%2017.3401%205.7998%2018.0001C5.79991%2018.66%206.34008%2019.2003%207%2019.2003H13C13.6599%2019.2003%2014.2001%2018.66%2014.2002%2018.0001C14.2002%2017.3401%2013.66%2016.7999%2013%2016.7999H7ZM7%2012.0001C6.34002%2012.0001%205.7998%2012.5403%205.7998%2013.2003C5.79997%2013.8602%206.34012%2014.3995%207%2014.3995H16.5996C17.2595%2014.3995%2017.7996%2013.8602%2017.7998%2013.2003C17.7998%2012.5403%2017.2596%2012.0001%2016.5996%2012.0001H7ZM7%207.20032C6.34016%207.20034%205.80004%207.73975%205.7998%208.39954C5.7998%209.05952%206.34002%209.59971%207%209.59973H16.5996C17.2596%209.59973%2017.7998%209.05954%2017.7998%208.39954C17.7996%207.73974%2017.2595%207.20032%2016.5996%207.20032H7ZM11.7998%202.39954C11.1399%202.39962%2010.5997%202.93988%2010.5996%203.59973C10.5996%204.25968%2011.1399%204.79984%2011.7998%204.79993C12.4598%204.79993%2013%204.25973%2013%203.59973C12.9999%202.93983%2012.4597%202.39954%2011.7998%202.39954Z'%20fill='%23363D47'/%3e%3c/svg%3e" alt="Tech Specs">
+        </button>
+
+        <button id="resetBtn" title="Reset View" class="icon-button reset-btn">
+            <img id="resetIcon" src="data:image/svg+xml,%3csvg%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M19.7538%208.07324C19.9754%207.85165%2020.3487%207.85171%2020.5702%208.08496L23.8231%2011.3389C24.1962%2011.7004%2023.9396%2012.3301%2023.4149%2012.3301H21.328C21.328%2017.4849%2017.1536%2021.6602%2011.9999%2021.6602C10.7873%2021.6601%209.62146%2021.4266%208.56045%2020.9951C7.77929%2020.6803%207.56948%2019.6778%208.16397%2019.083C8.47879%2018.7681%208.9571%2018.6395%209.37686%2018.8145C10.1813%2019.1525%2011.0789%2019.3271%2011.9999%2019.3271C15.8594%2019.3271%2018.9959%2016.1903%2018.996%2012.3301H16.9091C16.3844%2012.3301%2016.1278%2011.7003%2016.5009%2011.3271L19.7538%208.07324ZM11.9999%203C13.2125%203%2014.3783%203.23356%2015.4394%203.66504C16.2206%203.97992%2016.4305%204.98236%2015.8358%205.57715C15.521%205.89204%2015.0427%206.02064%2014.623%205.8457C13.8185%205.5076%2012.9209%205.33203%2011.9999%205.33203C8.14042%205.33203%205.00381%208.46979%205.00381%2012.3301H7.09073C7.61543%2012.3301%207.87211%2012.9598%207.51065%2013.3213L4.25772%2016.5752C4.02452%2016.8084%203.6628%2016.8084%203.42959%2016.5752L0.176665%2013.3213C-0.196457%2012.9598%200.0601649%2012.3301%200.584868%2012.3301H2.67178C2.67178%207.17525%206.84616%203%2011.9999%203Z'%20fill='%23363D47'/%3e%3c/svg%3e" alt="Reset">
+        </button>
+        <button id="fullscreenBtn" class="icon-button fullscreen-btn" title="Fullscreen">
+            <img src="data:image/svg+xml,%3csvg%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M1.71387%2015.4287C2.65657%2015.4287%203.42845%2016.1999%203.42871%2017.1426V20.5713H6.85742C7.80011%2020.5715%208.57129%2021.3434%208.57129%2022.2861C8.5712%2023.2288%207.80005%2023.9998%206.85742%2024H1.71387C0.771173%2023.9999%209.33681e-05%2023.2288%200%2022.2861V17.1426C0.000260889%2016.2%200.771275%2015.4288%201.71387%2015.4287ZM22.2861%2015.4287C23.2287%2015.4289%2023.9997%2016.2%2024%2017.1426V22.2861C23.9999%2023.2288%2023.2288%2023.9998%2022.2861%2024H17.1426C16.1999%2023.9998%2015.4288%2023.2288%2015.4287%2022.2861C15.4287%2021.3434%2016.1998%2020.5715%2017.1426%2020.5713H20.5713V17.1426C20.5715%2016.1999%2021.3434%2015.4287%2022.2861%2015.4287ZM6.85742%200C7.79996%200.000251703%208.5711%200.771311%208.57129%201.71387C8.57129%202.65658%207.80008%203.42846%206.85742%203.42871H3.42871V6.85742C3.42854%207.80015%202.65663%208.57129%201.71387%208.57129C0.771191%208.57119%200.000168531%207.80008%200%206.85742V1.71387C0.000186733%200.77122%200.771202%200.000103502%201.71387%200H6.85742ZM22.2861%200C23.2287%200.00019319%2023.9998%200.771317%2024%201.71387V6.85742C23.9999%207.80007%2023.2288%208.5711%2022.2861%208.57129C21.3433%208.57129%2020.5714%207.80019%2020.5713%206.85742V3.42871H17.1426C16.1998%203.42855%2015.4287%202.65663%2015.4287%201.71387C15.4289%200.771297%2016.2%200.000161018%2017.1426%200H22.2861Z'%20fill='%23363D47'/%3e%3c/svg%3e" alt="Fullscreen" />
+        </button>
+
+
+    </div>
+
+    <!-- Add navigation UI -->
+    <div class="navigation-ui">
+        <button id="prevHotspotBtn" class="nav-button prev-button" title="Previous">
+            <img src="data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M15%2018L9%2012L15%206'%20stroke='%23333333'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3e%3c/svg%3e" alt="Previous">
+        </button>
+        <div id="currentHotspotTitle" class="hotspot-title-display"></div>
+        <button id="nextHotspotBtn" class="nav-button next-button" title="Next">
+            <img src="data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M9%206L15%2012L9%2018'%20stroke='%23333333'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3e%3c/svg%3e" alt="Next">
+        </button>
+    </div>
+
+    <div id="cameraControls"></div>
+
+
+
+
+
+
+
+</body>
+
+</html>
