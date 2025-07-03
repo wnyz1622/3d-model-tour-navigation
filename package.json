@@ -1,6 +1,15 @@
 {
+  "name": "3d-model-tour-navigation",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "postprocessing": "^6.37.4",
-    "three": "^0.177.0"
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
   }
 }
