@@ -82,12 +82,13 @@ canvas {
     font-family: 'Noto Sans', sans-serif;
     pointer-events: auto;
     display: none;
-    z-index: 1001;
+    z-index: 1002;
 
     /* Default: hover mode (title only) */
-    height: 25px;
+    height: auto;
     /* fixed height */
     width: auto;
+    max-width: 90vw;
     /* hug content */
     white-space: nowrap;
     overflow: hidden;
@@ -100,6 +101,7 @@ canvas {
     width: 350px;
     /* fixed width */
     white-space: normal;
+    z-index: 1001;
 }
 
 .hotspot-info .closeSpecIcon {
@@ -112,12 +114,13 @@ canvas {
     z-index: 1005;
     opacity: 0.7;
     transition: opacity 0.2s, filter 0.2s;
+    display: none;
 }
+
 
 .hotspot-info .closeSpecIcon:hover {
     opacity: 1;
-    width: 48px;
-    filter: brightness(1.2) drop-shadow(0 0 2px #EF5337);
+
 }
 
 .hotspot-title {
@@ -142,26 +145,34 @@ canvas {
     display: block;
 }
 
+.hotspot-info.active .closeSpecIcon {
+    display: block;
+}
+
+
 @media (max-width: 600px) {
-    .hotspot-info.mobile-fixed {
+    .hotspot-info.active.mobile-fixed {
         position: fixed;
-        bottom: 0;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
         width: auto;
-        height: 180px;
+        height: 200px;
         transform: none;
         padding: 30px;
         border-radius: 0;
         z-index: 1002;
+        overflow-y: auto;
     }
-
+    
     .hotspot-description {
-        font-size: 8pt;
+        font-size: 9pt;
         /* or 14px or smaller if needed */
         line-height: 1.4em;
     }
 
     .hotspot-title {
-        font-size: 10pt;
+        font-size: 11pt;
     }
 }
 
@@ -170,7 +181,7 @@ canvas {
         position: fixed;
         top: 120px;
         right: 30px;
-       
+
         /* Prevent overflow below header */
         overflow-y: auto;
         /* Add scroll if content overflows */
@@ -181,7 +192,7 @@ canvas {
 
     .hotspot-description {
         font-size: 8pt;
-        line-height: 1.2em;
+        line-height: 1.4em;
     }
 
     .hotspot-title {

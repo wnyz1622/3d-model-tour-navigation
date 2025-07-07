@@ -84,16 +84,14 @@ class HotspotManager {
 
         // Create OutlineEffect
         this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
-            selection: [], // <- safer than using null
+            selection: [],
             blendFunction: BlendFunction.ALPHA,
             edgeStrength: 5,
             pulseSpeed: 0.0,
-            visibleEdgeColor: new THREE.Color('#EF5337'), // ← This sets the outline color
+            visibleEdgeColor: new THREE.Color('#EF5337'),
             hiddenEdgeColor: new THREE.Color('#EF5337'),
-            //blur: true,
-            //width: 10,
             multisampling: 4,
-            resolution: 1080,
+            resolution: Math.max(window.innerWidth, window.innerHeight) * window.devicePixelRatio,
             xRay: false
         });
 
@@ -904,21 +902,32 @@ class HotspotManager {
                 }
 
             }
-
-            // Update positions immediately without smoothing
+            // Always update hotspot icon position
             hotspot.element.style.left = `${x}px`;
             hotspot.element.style.top = `${y}px`;
-            //hotspot.info.style.left = `${x + 20}px`;
-            //hotspot.info.style.top = `${y}px`;
-            if (window.innerWidth < 600) {
-                hotspot.info.classList.add('mobile-fixed');
-            } else if (window.innerHeight < 400) {
-                hotspot.info.classList.add('mobile-fixed');
-            } else {
-                //hotspot.info.classList.remove('mobile-fixed');
-                hotspot.info.style.left = `${x + 20}px`;
-                hotspot.info.style.top = `${y}px`;
-            }
+
+// Always position the inactive hotspot info beside the icon
+hotspot.info.style.left = `${x + 20}px`;
+hotspot.info.style.top = `${y}px`;
+function isMobileView() {
+    return window.innerWidth < 600 || window.innerHeight < 400;
+  }
+  
+  if (isMobileView()) {
+    if (hotspot === this.selectedHotspot) {
+        hotspot.info.classList.add('mobile-fixed');
+        hotspot.info.style.left = '';
+        hotspot.info.style.top = '';
+    } else {
+        hotspot.info.classList.remove('mobile-fixed');
+        hotspot.info.style.left = `${x + 20}px`;
+        hotspot.info.style.top = `${y}px`;
+    }
+} else {
+    hotspot.info.classList.remove('mobile-fixed');
+    hotspot.info.style.left = `${x + 20}px`;
+    hotspot.info.style.top = `${y}px`;
+}
 
         });
     }
@@ -927,6 +936,14 @@ class HotspotManager {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        if (this.outlineEffect) {
+            if (typeof this.outlineEffect.setSize === 'function') {
+                this.outlineEffect.setSize(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio);
+            } else if (this.outlineEffect.resolution) {
+                this.outlineEffect.resolution.width = window.innerWidth * window.devicePixelRatio;
+                this.outlineEffect.resolution.height = window.innerHeight * window.devicePixelRatio;
+            }
+        }
     }
 
     setupFullscreenButton() {
