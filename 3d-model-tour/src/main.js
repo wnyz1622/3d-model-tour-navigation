@@ -90,8 +90,11 @@ class HotspotManager {
             pulseSpeed: 0.0,
             visibleEdgeColor: new THREE.Color('#EF5337'),
             hiddenEdgeColor: new THREE.Color('#EF5337'),
-            multisampling: 4,
-            resolution: Math.max(window.innerWidth, window.innerHeight) * window.devicePixelRatio,
+            multisampling: 8,
+            resolution: {
+                width: window.innerWidth * window.devicePixelRatio,
+                height: window.innerHeight * window.devicePixelRatio
+            },
             xRay: false
         });
 
@@ -650,6 +653,10 @@ class HotspotManager {
                         ? `url('media/door_visited.png')`
                         : `url('media/Info_visited.png')`;
                     this.selectedHotspot = null;
+                    // Clear outline effect
+                    if (this.outlineEffect && this.outlineEffect.selection) {
+                        this.outlineEffect.selection.clear();
+                    }
                 }
             });
 
@@ -936,6 +943,11 @@ function isMobileView() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.composer.setSize(window.innerWidth, window.innerHeight);
+        if (this.composer.setPixelRatio) {
+            this.composer.setPixelRatio(window.devicePixelRatio);
+        }
         if (this.outlineEffect) {
             if (typeof this.outlineEffect.setSize === 'function') {
                 this.outlineEffect.setSize(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio);
