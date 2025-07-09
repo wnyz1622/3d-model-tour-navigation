@@ -5,8 +5,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { Mesh } from 'three';
+import { WebGLRenderer } from "three";
 
-import { EffectComposer, RenderPass, EffectPass, OutlineEffect, BlendFunction } from 'postprocessing';
+
+import { EffectComposer, RenderPass, EffectPass, OutlineEffect, BlendFunction, SMAAEffect } from 'postprocessing';
 
 class HotspotManager {
     constructor() {
@@ -50,7 +52,12 @@ class HotspotManager {
         this.camera.lookAt(0, 0, 0);
 
         // Create renderer
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new WebGLRenderer({
+            powerPreference: "high-performance",
+            antialias: true,
+            stencil: false,
+            depth: true
+        });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
@@ -97,17 +104,18 @@ class HotspotManager {
             pulseSpeed: 0.0,
             visibleEdgeColor: new THREE.Color('rgba(239,83,55,0)'), // Start transparent
             hiddenEdgeColor: new THREE.Color('rgba(239,83,55,0)'),
-            multisampling: 8,
+            multisampling: 0,
             resolution: {
                 width: window.innerWidth * window.devicePixelRatio,
                 height: window.innerHeight * window.devicePixelRatio
             },
             xRay: false
         });
-
-        const effectPass = new EffectPass(this.camera, this.outlineEffect);
+        //SMAA
+        const smaaEffect = new SMAAEffect();
+        // Create effect pass with both outline and SMAA
+        const effectPass = new EffectPass(this.camera, this.outlineEffect, smaaEffect);
         effectPass.renderToScreen = true;
-        // Toggle the next line to enable/disable outline postprocessing:
         this.composer.addPass(effectPass);
         //this.composer.render();
 
@@ -961,28 +969,28 @@ class HotspotManager {
             hotspot.element.style.left = `${x}px`;
             hotspot.element.style.top = `${y}px`;
 
-// Always position the inactive hotspot info beside the icon
-hotspot.info.style.left = `${x + 20}px`;
-hotspot.info.style.top = `${y}px`;
-function isMobileView() {
-    return window.innerWidth < 600 || window.innerHeight < 400;
-  }
-  
-  if (isMobileView()) {
-    if (hotspot === this.selectedHotspot) {
-        hotspot.info.classList.add('mobile-fixed');
-        hotspot.info.style.left = '';
-        hotspot.info.style.top = '';
-    } else {
-        hotspot.info.classList.remove('mobile-fixed');
-        hotspot.info.style.left = `${x + 20}px`;
-        hotspot.info.style.top = `${y}px`;
-    }
-} else {
-    hotspot.info.classList.remove('mobile-fixed');
-    hotspot.info.style.left = `${x + 20}px`;
-    hotspot.info.style.top = `${y}px`;
-}
+            // Always position the inactive hotspot info beside the icon
+            hotspot.info.style.left = `${x + 20}px`;
+            hotspot.info.style.top = `${y}px`;
+            function isMobileView() {
+                return window.innerWidth < 600 || window.innerHeight < 400;
+            }
+
+            if (isMobileView()) {
+                if (hotspot === this.selectedHotspot) {
+                    hotspot.info.classList.add('mobile-fixed');
+                    hotspot.info.style.left = '';
+                    hotspot.info.style.top = '';
+                } else {
+                    hotspot.info.classList.remove('mobile-fixed');
+                    hotspot.info.style.left = `${x + 20}px`;
+                    hotspot.info.style.top = `${y}px`;
+                }
+            } else {
+                hotspot.info.classList.remove('mobile-fixed');
+                hotspot.info.style.left = `${x + 20}px`;
+                hotspot.info.style.top = `${y}px`;
+            }
 
         });
     }
@@ -991,18 +999,17 @@ function isMobileView() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); //  Limit pixel ratio
+        //update composer
         this.composer.setSize(window.innerWidth, window.innerHeight);
+        this.composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        //Update outline effect resolution
         if (this.composer.setPixelRatio) {
             this.composer.setPixelRatio(window.devicePixelRatio);
         }
-        if (this.outlineEffect) {
-            if (typeof this.outlineEffect.setSize === 'function') {
-                this.outlineEffect.setSize(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio);
-            } else if (this.outlineEffect.resolution) {
-                this.outlineEffect.resolution.width = window.innerWidth * window.devicePixelRatio;
-                this.outlineEffect.resolution.height = window.innerHeight * window.devicePixelRatio;
-            }
+        if (this.outlineEffect && this.outlineEffect.resolution) {
+            this.outlineEffect.resolution.width = window.innerWidth * Math.min(window.devicePixelRatio, 2);
+            this.outlineEffect.resolution.height = window.innerHeight * Math.min(window.devicePixelRatio, 2);
         }
     }
 
