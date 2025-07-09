@@ -27,13 +27,20 @@ class HotspotManager {
         const rgbeLoader = new RGBELoader();
         rgbeLoader.load('media/model/cannon_1k.hdr', (hdrTexture) => {
             hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+            // Set filtering for environment map
+            if (hdrTexture.minFilter !== undefined) hdrTexture.minFilter = THREE.LinearMipmapLinearFilter;
+            if (hdrTexture.magFilter !== undefined) hdrTexture.magFilter = THREE.LinearFilter;
+            hdrTexture.needsUpdate = true;
             this.scene.environment = hdrTexture;
-
             //this.scene.background = hdrTexture;
         });
 
         const bgLoader = new THREE.TextureLoader();
         bgLoader.load('media/model/GradientBackground_2.png', (bgTexture) => {
+            // Set filtering for background texture
+            if (bgTexture.minFilter !== undefined) bgTexture.minFilter = THREE.LinearMipmapLinearFilter;
+            if (bgTexture.magFilter !== undefined) bgTexture.magFilter = THREE.LinearFilter;
+            bgTexture.needsUpdate = true;
             this.scene.background = bgTexture; // ✅ visible background
         });
 
@@ -88,8 +95,8 @@ class HotspotManager {
             blendFunction: BlendFunction.ALPHA,
             edgeStrength: 5,
             pulseSpeed: 0.0,
-            visibleEdgeColor: new THREE.Color('#EF5337'),
-            hiddenEdgeColor: new THREE.Color('#EF5337'),
+            visibleEdgeColor: new THREE.Color('rgba(239,83,55,0)'), // Start transparent
+            hiddenEdgeColor: new THREE.Color('rgba(239,83,55,0)'),
             multisampling: 8,
             resolution: {
                 width: window.innerWidth * window.devicePixelRatio,
@@ -100,6 +107,7 @@ class HotspotManager {
 
         const effectPass = new EffectPass(this.camera, this.outlineEffect);
         effectPass.renderToScreen = true;
+        // Toggle the next line to enable/disable outline postprocessing:
         this.composer.addPass(effectPass);
         //this.composer.render();
 
@@ -126,14 +134,20 @@ class HotspotManager {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
 
+        // Enable panning with right mouse button
+        this.controls.enablePan = true;
+        this.controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+        this.controls.mouseButtons.MIDDLE = THREE.MOUSE.DOLLY;
+        this.controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+
         // Set orbit boundaries
         // this.controls.minDistance = 2; // Minimum zoom distance
         this.controls.maxDistance = 30; // Maximum zoom distance
         this.controls.minPolarAngle = Math.PI / 6; // Minimum vertical angle (30 degrees)
         this.controls.maxPolarAngle = Math.PI / 2; // Maximum vertical angle (120 degrees)
-        this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
-        this.controls.maxAzimuthAngle = Math.PI;
-        this.controls.enablePan = false; // Disable panning to keep focus on the model
+        // this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
+        // this.controls.maxAzimuthAngle = Math.PI;
+        //this.controls.enablePan = false; // Disable panning to keep focus on the model
         this.controls.target.y = 0; // Keep the orbit target at floor level
 
         // Setup loaders
@@ -317,6 +331,34 @@ class HotspotManager {
 
                     this.scene.add(this.model);
 
+                    // Set texture filtering for all textures in model materials
+                    this.model.traverse((node) => {
+                        if (node.isMesh && node.material) {
+                            const materials = Array.isArray(node.material) ? node.material : [node.material];
+                            materials.forEach((mat) => {
+                                [
+                                    'map',
+                                    'normalMap',
+                                    'roughnessMap',
+                                    'metalnessMap',
+                                    'aoMap',
+                                    'emissiveMap',
+                                    'alphaMap',
+                                    'bumpMap',
+                                    'displacementMap',
+                                    'specularMap',
+                                    'envMap'
+                                ].forEach((mapType) => {
+                                    if (mat[mapType]) {
+                                        mat[mapType].minFilter = THREE.LinearMipmapLinearFilter;
+                                        mat[mapType].magFilter = THREE.LinearFilter;
+                                        mat[mapType].needsUpdate = true;
+                                    }
+                                });
+                            });
+                        }
+                    });
+
                     // Center model
                     const box = new THREE.Box3().setFromObject(this.model);
                     const center = box.getCenter(new THREE.Vector3());
@@ -355,6 +397,10 @@ class HotspotManager {
                             }
                         }
                     });
+
+                    // Set orbit controls target to model center
+                    this.controls.target.set(0, 0, 0);
+                    this.controls.update();
 
                     resolve();
                 },
@@ -465,6 +511,7 @@ class HotspotManager {
 
         if (meshToOutline && meshToOutline.isMesh) {
             this.outlineEffect.selection.set([meshToOutline]);
+            this.animateOutlineEdgeStrength(0, 5, 3000);
             console.log('✔ Outline applied to:', meshToOutline.name);
         } else if (meshToOutline) {
             // If it's a group, find a mesh inside
@@ -477,6 +524,7 @@ class HotspotManager {
 
             if (childMesh) {
                 this.outlineEffect.selection.set([childMesh]);
+                this.animateOutlineEdgeStrength(0, 5, 3000);
                 console.log('✔ Outline applied to child mesh:', childMesh.name);
             } else {
                 console.warn('❌ No mesh found to apply outline for:', hotspotData.node);
@@ -1118,6 +1166,23 @@ function isMobileView() {
             this.mixer.update(delta);
         }
 
+    }
+
+    animateOutlineEdgeStrength(start, end, duration, onComplete) {
+        if (!this.outlineEffect) return;
+        const startTime = performance.now();
+        const animate = () => {
+            const now = performance.now();
+            const t = Math.min((now - startTime) / duration, 1);
+            this.outlineEffect.edgeStrength = start + (end - start) * t;
+            if (t < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                this.outlineEffect.edgeStrength = end;
+                if (onComplete) onComplete();
+            }
+        };
+        animate();
     }
 }
 
