@@ -100,22 +100,30 @@ class HotspotManager {
         this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
             selection: [],
             blendFunction: BlendFunction.ALPHA,
-            edgeStrength: 5,
+            edgeStrength: 3,
             pulseSpeed: 0.0,
-            visibleEdgeColor: new THREE.Color('rgba(239,83,55,0)'), // Start transparent
-            hiddenEdgeColor: new THREE.Color('rgba(239,83,55,0)'),
-            multisampling: 0,
+            visibleEdgeColor: new THREE.Color('#ef5337'), // Start transparent
+            hiddenEdgeColor: new THREE.Color('#ef5337'),
+            multisampling: 4,
             resolution: {
-                width: window.innerWidth * window.devicePixelRatio,
-                height: window.innerHeight * window.devicePixelRatio
+                width: window.innerWidth * Math.min(window.devicePixelRatio, 2),
+                height: window.innerHeight * Math.min(window.devicePixelRatio, 2)
             },
-            xRay: false
+            xRay: false,
+            // Edge detection settings
+            patternTexture: null,
+            kernelSize: 1,
+            blur: true,
+            edgeGlow: 0.0,
+            usePatternTexture: false
         });
         //SMAA
         const smaaEffect = new SMAAEffect();
         // Create effect pass with both outline and SMAA
         const effectPass = new EffectPass(this.camera, this.outlineEffect, smaaEffect);
         effectPass.renderToScreen = true;
+
+        //add effect pass to composer
         this.composer.addPass(effectPass);
         //this.composer.render();
 
@@ -143,7 +151,7 @@ class HotspotManager {
         this.controls.dampingFactor = 0.05;
 
         // Enable panning with right mouse button
-        this.controls.enablePan = true;
+        this.controls.enablePan = false;
         this.controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
         this.controls.mouseButtons.MIDDLE = THREE.MOUSE.DOLLY;
         this.controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
@@ -998,18 +1006,22 @@ class HotspotManager {
     onWindowResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
+        
+        const pixelRatio = Math.min(window.devicePixelRatio, 2);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); //  Limit pixel ratio
-        //update composer
+        this.renderer.setPixelRatio(pixelRatio);
+        
+        // Update composer
         this.composer.setSize(window.innerWidth, window.innerHeight);
-        this.composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        //Update outline effect resolution
-        if (this.composer.setPixelRatio) {
-            this.composer.setPixelRatio(window.devicePixelRatio);
-        }
+        this.composer.setPixelRatio(pixelRatio);
+        
+        // Update outline effect resolution with proper scaling
         if (this.outlineEffect && this.outlineEffect.resolution) {
-            this.outlineEffect.resolution.width = window.innerWidth * Math.min(window.devicePixelRatio, 2);
-            this.outlineEffect.resolution.height = window.innerHeight * Math.min(window.devicePixelRatio, 2);
+            this.outlineEffect.resolution.width = window.innerWidth * pixelRatio;
+            this.outlineEffect.resolution.height = window.innerHeight * pixelRatio;
+            
+            // Force update of internal render targets
+            this.outlineEffect.setSize(window.innerWidth * pixelRatio, window.innerHeight * pixelRatio);
         }
     }
 
