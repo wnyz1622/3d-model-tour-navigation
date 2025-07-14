@@ -100,7 +100,7 @@ class HotspotManager {
         this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
             selection: [],
             blendFunction: BlendFunction.ALPHA,
-            edgeStrength: 3,
+            edgeStrength: 4,
             pulseSpeed: 0.0,
             visibleEdgeColor: new THREE.Color('#ef5337'), // Start transparent
             hiddenEdgeColor: new THREE.Color('#ef5337'),
@@ -248,7 +248,7 @@ class HotspotManager {
             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             this.loader.setDRACOLoader(dracoLoader);
 
-            const modelPath = 'media/model/scene-v3-v2.glb';
+            const modelPath = 'media/model/scene-v4-v2.glb';
             console.log('Loading model from:', modelPath);
 
             this.loader.load(
