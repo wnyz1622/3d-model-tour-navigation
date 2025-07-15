@@ -248,7 +248,7 @@ class HotspotManager {
             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             this.loader.setDRACOLoader(dracoLoader);
 
-            const modelPath = 'media/model/scene-v4-v2.glb';
+            const modelPath = 'media/model/scene2k-v5-v1.glb';
             console.log('Loading model from:', modelPath);
 
             this.loader.load(
@@ -698,9 +698,15 @@ class HotspotManager {
             const infoDiv = document.createElement('div');
             infoDiv.className = 'hotspot-info';
             infoDiv.innerHTML = `
-            <img class="closeSpecIcon" src="media/Close.png" alt="Close" />
-            <div class="hotspot-title">${hotspotData.title}</div>
-            <div class="hotspot-description">${hotspotData.description}</div>
+           
+             <img class="closeSpecIcon" src="media/Close.png" alt="Close" />
+             <div class="text-scroll"> 
+            
+             <div class="hotspot-title">${hotspotData.title}</div>
+        <div class="hotspot-description">${hotspotData.description}</div>
+    </div>
+    
+    <div class="bottom-blocker"></div>
         `;
             document.body.appendChild(infoDiv);
 
@@ -1006,20 +1012,20 @@ class HotspotManager {
     onWindowResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
-        
+
         const pixelRatio = Math.min(window.devicePixelRatio, 2);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(pixelRatio);
-        
+
         // Update composer
         this.composer.setSize(window.innerWidth, window.innerHeight);
         this.composer.setPixelRatio(pixelRatio);
-        
+
         // Update outline effect resolution with proper scaling
         if (this.outlineEffect && this.outlineEffect.resolution) {
             this.outlineEffect.resolution.width = window.innerWidth * pixelRatio;
             this.outlineEffect.resolution.height = window.innerHeight * pixelRatio;
-            
+
             // Force update of internal render targets
             this.outlineEffect.setSize(window.innerWidth * pixelRatio, window.innerHeight * pixelRatio);
         }

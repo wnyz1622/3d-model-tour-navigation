@@ -114,5 +114,33 @@
     "title": "Exterior",
     "camera": "Cam_17_ExteriorView",
     "type": "camera"
-  }
+  },
+  {
+    "node": "18_BoomContrlF1",
+    "title": "F1",
+    "camera": "Cam_18_BoomContrlF1",
+    "type": "callout",
+    "description": "Often activates spray preset 1 (e.g., Type I fluid at a defined temperature and pressure)."
+  },
+  {
+    "node": "19_BoomContrlF2",
+    "title": "F2",
+    "camera": "Cam_19_BoomContrlF2",
+    "type": "callout",
+    "description": "Usually toggles spray preset 2 (e.g., switching to Type IV fluid or changing spray pattern)."
+  },
+  {
+    "node": "20_BoomContrlF3",
+    "title": "F3",
+    "camera": "Cam_20_BoomContrlF3",
+    "type": "callout",
+    "description": "Can be user-programmable, but is sometimes mapped to things like boom auto-stow, wiper spray, or intercom toggle."
+   },
+  {
+    "node": "21_HMIdisplay",
+    "title": "HMI Display",
+    "camera": "Cam_21_HMIdisplay",
+    "type": "callout",
+     "description": "HMI display (a Human‑Machine Interface) which is tied to the basket’s control system. Here’s what it does:\n\n•  Operational Feedback: Shows system status—hydraulic pressure, fluid mix, temperature, and alerts.\n\n• Mode Transitions: Lets you shift between standard modes (spray, stow, service) and shows prompts—like when a keypad override is needed.\n\n• Diagnostics & Alarms: Displays error codes or warnings, especially during or after an E‑stop event, and triggers the keypad reset to continuead."
+ }
 ]
