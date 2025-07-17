@@ -157,8 +157,8 @@ class HotspotManager {
         this.controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
 
         // Set orbit boundaries
-        // this.controls.minDistance = 2; // Minimum zoom distance
-        this.controls.maxDistance = 30; // Maximum zoom distance
+        this.controls.minDistance = 0.1; // Minimum zoom distance
+        this.controls.maxDistance = 15; // Maximum zoom distance
         this.controls.minPolarAngle = Math.PI / 6; // Minimum vertical angle (30 degrees)
         this.controls.maxPolarAngle = Math.PI / 2; // Maximum vertical angle (120 degrees)
         // this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
@@ -248,7 +248,7 @@ class HotspotManager {
             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             this.loader.setDRACOLoader(dracoLoader);
 
-            const modelPath = 'media/model/scene2k-v5-v1.glb';
+            const modelPath = 'media/model/scene-v5.glb';
             console.log('Loading model from:', modelPath);
 
             this.loader.load(
@@ -415,7 +415,7 @@ class HotspotManager {
                     });
 
                     // Set orbit controls target to model center
-                    this.controls.target.set(0, 0, 0);
+                    this.controls.target.set(0, 0, 10); // Move the target 1 unit forward
                     this.controls.update();
 
                     resolve();
@@ -486,42 +486,93 @@ class HotspotManager {
         hotspot.info.style.display = 'block';
         hotspot.info.classList.add('active');
 
-        // 🔁 Move to predefined camera position if available
-        const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
-        if (cameraNode && cameraNode.isCamera) {
-            const endPos = new THREE.Vector3();
-            cameraNode.getWorldPosition(endPos);
+// 🔁 Move to predefined camera position if available
+const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
+if (cameraNode && cameraNode.isCamera) {
+    const endPos = new THREE.Vector3();
+    cameraNode.getWorldPosition(endPos);
 
-            const endQuat = new THREE.Quaternion();
-            cameraNode.getWorldQuaternion(endQuat);
+    const endQuat = new THREE.Quaternion();
+    cameraNode.getWorldQuaternion(endQuat);
 
-            const startPos = this.camera.position.clone();
-            const startQuat = this.camera.quaternion.clone();
-            const startTarget = this.controls.target.clone();
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
-            const target = endPos.clone().add(forward);
+    const startPos = this.camera.position.clone();
+    const startQuat = this.camera.quaternion.clone();
+    const startTarget = this.controls.target.clone();
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
+    const target = endPos.clone().add(forward);
 
-            const duration = 1500;
-            const startTime = Date.now();
+    // Calculate distance and make zoom more dramatic when far away
+    const distance = startPos.distanceTo(endPos);
+    const farThreshold = 3.0; // Distance considered "far"
+    
+    let finalEndPos = endPos;
+    
+    // If camera is far away, move closer than the target first to make zoom more obvious
+    if (distance > farThreshold) {
+        const direction = startPos.clone().sub(endPos).normalize();
+        const closePos = endPos.clone().add(direction.multiplyScalar(0.3)); // Get very close
+        
+        // First animation: zoom in close
+        const zoomInDuration = 800;
+        const zoomInStartTime = Date.now();
+        
+        const zoomInAnimate = () => {
+            const elapsed = Date.now() - zoomInStartTime;
+            const t = Math.min(elapsed / zoomInDuration, 1);
+            const ease = 1 - Math.pow(1 - t, 4);
+            
+            this.camera.position.lerpVectors(startPos, closePos, ease);
+            this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
+            this.controls.target.lerpVectors(startTarget, target, ease);
+            this.controls.update();
+            
+            if (t < 1) {
+                requestAnimationFrame(zoomInAnimate);
+            } else {
+                // Second animation: settle to final position
+                const settleStartTime = Date.now();
+                const settleDuration = 700;
+                const settleStartPos = this.camera.position.clone();
+                
+                const settleAnimate = () => {
+                    const elapsed = Date.now() - settleStartTime;
+                    const t = Math.min(elapsed / settleDuration, 1);
+                    const ease = 1 - Math.pow(1 - t, 3);
+                    
+                    this.camera.position.lerpVectors(settleStartPos, finalEndPos, ease);
+                    this.controls.update();
+                    
+                    if (t < 1) requestAnimationFrame(settleAnimate);
+                };
+                
+                settleAnimate();
+            }
+        };
+        
+        zoomInAnimate();
+    } else {
+        // Normal animation for close distances
+        const duration = 1500;
+        const startTime = Date.now();
 
-            const animate = () => {
-                const elapsed = Date.now() - startTime;
-                const t = Math.min(elapsed / duration, 1);
-                const ease = 1 - Math.pow(1 - t, 4);
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const t = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 4);
 
-                this.camera.position.lerpVectors(startPos, endPos, ease);
-                this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
-                this.controls.target.lerpVectors(startTarget, target, ease);
-                this.controls.update();
+            this.camera.position.lerpVectors(startPos, finalEndPos, ease);
+            this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
+            this.controls.target.lerpVectors(startTarget, target, ease);
+            this.controls.update();
 
-                if (t < 1) requestAnimationFrame(animate);
-            };
+            if (t < 1) requestAnimationFrame(animate);
+        };
 
-            animate();
-        } else {
-            this.moveToHotspotView(hotspot);
-        }
-
+        animate();
+    }
+} else {
+    this.moveToHotspotView(hotspot);
+}
         //outline seleected mesh
         const meshToOutline = this.model.getObjectByName(hotspotData.node);
 
@@ -647,22 +698,26 @@ class HotspotManager {
         const navigateToHotspot = (index) => {
             if (!this.allHotspots || this.allHotspots.length === 0) return;
 
-            // Handle the title state (-1) and regular hotspot indices
-            if (index < -1) {
-                // Going backwards from title state should go to last hotspot
-                this.currentHotspotIndex = this.allHotspots.length - 1;
-            } else if (index >= this.allHotspots.length) {
-                // Going forwards from last hotspot should go to title state
-                this.currentHotspotIndex = -1;
-            } else {
-                this.currentHotspotIndex = index;
-            }
-
-            // If we're in title state, show title and return
+            // If we're in title state (-1), start navigation from the requested direction
             if (this.currentHotspotIndex === -1) {
-                titleDisplay.textContent = "Click a hotspot or use arrows";
-                // Hide any active hotspot info here if needed
-                return;
+                if (index < -1) {
+                    // Going backwards from title should go to last hotspot
+                    this.currentHotspotIndex = this.allHotspots.length - 1;
+                } else {
+                    // Going forwards from title should go to first hotspot
+                    this.currentHotspotIndex = 0;
+                }
+            } else {
+                // Normal navigation - wrap around at boundaries
+                if (index < 0) {
+                    // Going backwards from first hotspot wraps to last
+                    this.currentHotspotIndex = this.allHotspots.length - 1;
+                } else if (index >= this.allHotspots.length) {
+                    // Going forwards from last hotspot wraps to first
+                    this.currentHotspotIndex = 0;
+                } else {
+                    this.currentHotspotIndex = index;
+                }
             }
 
             // Show the hotspot
