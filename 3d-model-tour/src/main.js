@@ -641,13 +641,31 @@ class HotspotManager {
         const titleDisplay = document.getElementById('currentHotspotTitle');
 
         // Set initial text
+        this.currentHotspotIndex = -1
         titleDisplay.textContent = "Click a hotspot or use arrows";
 
         const navigateToHotspot = (index) => {
             if (!this.allHotspots || this.allHotspots.length === 0) return;
 
-            this.currentHotspotIndex = (index  + this.allHotspots.length) % this.allHotspots.length;
+            // Handle the title state (-1) and regular hotspot indices
+            if (index < -1) {
+                // Going backwards from title state should go to last hotspot
+                this.currentHotspotIndex = this.allHotspots.length - 1;
+            } else if (index >= this.allHotspots.length) {
+                // Going forwards from last hotspot should go to title state
+                this.currentHotspotIndex = -1;
+            } else {
+                this.currentHotspotIndex = index;
+            }
 
+            // If we're in title state, show title and return
+            if (this.currentHotspotIndex === -1) {
+                titleDisplay.textContent = "Click a hotspot or use arrows";
+                // Hide any active hotspot info here if needed
+                return;
+            }
+
+            // Show the hotspot
             const hotspotData = this.allHotspots[this.currentHotspotIndex];
             const hotspot = this.hotspots.find(h => h.data.node === hotspotData.node);
             if (hotspot) {
