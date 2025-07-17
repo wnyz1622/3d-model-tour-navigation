@@ -646,7 +646,7 @@ class HotspotManager {
         const navigateToHotspot = (index) => {
             if (!this.allHotspots || this.allHotspots.length === 0) return;
 
-            this.currentHotspotIndex = (index + this.allHotspots.length) % this.allHotspots.length;
+            this.currentHotspotIndex = (index  + this.allHotspots.length) % this.allHotspots.length;
 
             const hotspotData = this.allHotspots[this.currentHotspotIndex];
             const hotspot = this.hotspots.find(h => h.data.node === hotspotData.node);
