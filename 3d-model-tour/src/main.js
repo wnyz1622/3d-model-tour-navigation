@@ -4,11 +4,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { Mesh } from 'three';
+//import { Mesh } from 'three';
 import { WebGLRenderer } from "three";
-
-
 import { EffectComposer, RenderPass, EffectPass, OutlineEffect, BlendFunction, SMAAEffect } from 'postprocessing';
+import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 class HotspotManager {
     constructor() {
@@ -19,13 +18,25 @@ class HotspotManager {
         this.hotspotsData = null;
         this.selectedHotspot = null;
         this.currentHotspotIndex = 0;
+
+        this.currentHotspotIndex = 0;
+        this.visitedHotspots = new Set();
+        this.isAnimating = false;
+        this.needsUpdate = false;
+        this.frameCount = 0;
+        // Performance settings
+        this.LOD_DISTANCE = 10;
+        this.CULL_DISTANCE = 50;
+        this.targetFPS = 60;
+
     }
 
     async init() {
         console.log('Initializing...');
         // Create scene
         this.scene = new THREE.Scene();
-        //this.scene.background = new THREE.Color(0xf0f0f0);
+        this.clock = new THREE.Clock();
+        
         const rgbeLoader = new RGBELoader();
         rgbeLoader.load('media/model/cannon_1k.hdr', (hdrTexture) => {
             hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
@@ -35,6 +46,7 @@ class HotspotManager {
             hdrTexture.needsUpdate = true;
             this.scene.environment = hdrTexture;
             //this.scene.background = hdrTexture;
+            //this.scene.background = new THREE.Color(0xf0f0f0);
         });
 
         const bgLoader = new THREE.TextureLoader();
@@ -47,19 +59,22 @@ class HotspotManager {
         });
 
         // Create camera
-        this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 0, 0);
         this.camera.lookAt(0, 0, 0);
 
         // Create renderer
         this.renderer = new WebGLRenderer({
             powerPreference: "high-performance",
-            antialias: true,
+            antialias: window.devicePixelRatio <= 1,
             stencil: false,
-            depth: true
+            depth: true,
+            alpha: false,
+            preserveDrawingBuffer: false
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('container').appendChild(this.renderer.domElement);
@@ -100,20 +115,21 @@ class HotspotManager {
         this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
             selection: [],
             blendFunction: BlendFunction.ALPHA,
-            edgeStrength: 4,
+            edgeStrength: 2,
             pulseSpeed: 0.0,
             visibleEdgeColor: new THREE.Color('#ef5337'), // Start transparent
             hiddenEdgeColor: new THREE.Color('#ef5337'),
             multisampling: 4,
-            resolution: {
-                width: window.innerWidth * Math.min(window.devicePixelRatio, 2),
-                height: window.innerHeight * Math.min(window.devicePixelRatio, 2)
-            },
+            // resolution: {
+            //     // width: window.innerWidth * Math.min(window.devicePixelRatio, 2),
+            //     // height: window.innerHeight * Math.min(window.devicePixelRatio, 2)
+            // },
+            resolution: { width: window.innerWidth / 2, height: window.innerHeight / 2 },
             xRay: false,
             // Edge detection settings
             patternTexture: null,
             kernelSize: 1,
-            blur: true,
+            blur: false,
             edgeGlow: 0.0,
             usePatternTexture: false
         });
@@ -147,23 +163,22 @@ class HotspotManager {
 
         // Add controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-
-        // Enable panning with right mouse button
+        this.controls.enableDamping = true; // Enable smooth camera motion
+        this.controls.dampingFactor = 0.15; // Increase damping for smoother stop
+        this.controls.zoomSpeed = 2.0; // Increase zoom speed
         this.controls.enablePan = false;
         this.controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
         this.controls.mouseButtons.MIDDLE = THREE.MOUSE.DOLLY;
         this.controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
 
         // Set orbit boundaries
-        this.controls.minDistance = 0.1; // Minimum zoom distance
-        this.controls.maxDistance = 15; // Maximum zoom distance
+        this.controls.minDistance = 0.05; // Minimum zoom distance
+        this.controls.maxDistance = 20; // Maximum zoom distance
         this.controls.minPolarAngle = Math.PI / 6; // Minimum vertical angle (30 degrees)
         this.controls.maxPolarAngle = Math.PI / 2; // Maximum vertical angle (120 degrees)
         // this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
         // this.controls.maxAzimuthAngle = Math.PI;
-        //this.controls.enablePan = false; // Disable panning to keep focus on the model
+        this.controls.enablePan = false; // Disable panning to keep focus on the model
         this.controls.target.y = 0; // Keep the orbit target at floor level
 
         // Setup loaders
@@ -201,7 +216,8 @@ class HotspotManager {
         // );
         // this.scene.add(test);
         // this.outlineEffect.selection.set([test]);
-
+        this.stats = new Stats();
+        //document.body.appendChild(this.stats.dom);
         // Start animation loop
         this.clock = new THREE.Clock();
         this.animate();
@@ -212,7 +228,7 @@ class HotspotManager {
         // Setup DRACO loader
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-
+        
         // Setup GLTF loader
         this.loader = new GLTFLoader();
         this.loader.setDRACOLoader(dracoLoader);
@@ -248,7 +264,7 @@ class HotspotManager {
             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             this.loader.setDRACOLoader(dracoLoader);
 
-            const modelPath = 'media/model/scene-v5.glb';
+            const modelPath = 'media/model/scene2k-v5-v3.glb';
             console.log('Loading model from:', modelPath);
 
             this.loader.load(
@@ -486,93 +502,93 @@ class HotspotManager {
         hotspot.info.style.display = 'block';
         hotspot.info.classList.add('active');
 
-// 🔁 Move to predefined camera position if available
-const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
-if (cameraNode && cameraNode.isCamera) {
-    const endPos = new THREE.Vector3();
-    cameraNode.getWorldPosition(endPos);
+        // 🔁 Move to predefined camera position if available
+        const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
+        if (cameraNode && cameraNode.isCamera) {
+            const endPos = new THREE.Vector3();
+            cameraNode.getWorldPosition(endPos);
 
-    const endQuat = new THREE.Quaternion();
-    cameraNode.getWorldQuaternion(endQuat);
+            const endQuat = new THREE.Quaternion();
+            cameraNode.getWorldQuaternion(endQuat);
 
-    const startPos = this.camera.position.clone();
-    const startQuat = this.camera.quaternion.clone();
-    const startTarget = this.controls.target.clone();
-    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
-    const target = endPos.clone().add(forward);
+            const startPos = this.camera.position.clone();
+            const startQuat = this.camera.quaternion.clone();
+            const startTarget = this.controls.target.clone();
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
+            const target = endPos.clone().add(forward);
 
-    // Calculate distance and make zoom more dramatic when far away
-    const distance = startPos.distanceTo(endPos);
-    const farThreshold = 3.0; // Distance considered "far"
-    
-    let finalEndPos = endPos;
-    
-    // If camera is far away, move closer than the target first to make zoom more obvious
-    if (distance > farThreshold) {
-        const direction = startPos.clone().sub(endPos).normalize();
-        const closePos = endPos.clone().add(direction.multiplyScalar(0.3)); // Get very close
-        
-        // First animation: zoom in close
-        const zoomInDuration = 800;
-        const zoomInStartTime = Date.now();
-        
-        const zoomInAnimate = () => {
-            const elapsed = Date.now() - zoomInStartTime;
-            const t = Math.min(elapsed / zoomInDuration, 1);
-            const ease = 1 - Math.pow(1 - t, 4);
-            
-            this.camera.position.lerpVectors(startPos, closePos, ease);
-            this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
-            this.controls.target.lerpVectors(startTarget, target, ease);
-            this.controls.update();
-            
-            if (t < 1) {
-                requestAnimationFrame(zoomInAnimate);
-            } else {
-                // Second animation: settle to final position
-                const settleStartTime = Date.now();
-                const settleDuration = 700;
-                const settleStartPos = this.camera.position.clone();
-                
-                const settleAnimate = () => {
-                    const elapsed = Date.now() - settleStartTime;
-                    const t = Math.min(elapsed / settleDuration, 1);
-                    const ease = 1 - Math.pow(1 - t, 3);
-                    
-                    this.camera.position.lerpVectors(settleStartPos, finalEndPos, ease);
+            // Calculate distance and make zoom more dramatic when far away
+            const distance = startPos.distanceTo(endPos);
+            const farThreshold = 3.0; // Distance considered "far"
+
+            let finalEndPos = endPos;
+
+            // If camera is far away, move closer than the target first to make zoom more obvious
+            if (distance > farThreshold) {
+                const direction = startPos.clone().sub(endPos).normalize();
+                const closePos = endPos.clone().add(direction.multiplyScalar(0.3)); // Get very close
+
+                // First animation: zoom in close
+                const zoomInDuration = 800;
+                const zoomInStartTime = Date.now();
+
+                const zoomInAnimate = () => {
+                    const elapsed = Date.now() - zoomInStartTime;
+                    const t = Math.min(elapsed / zoomInDuration, 1);
+                    const ease = 1 - Math.pow(1 - t, 4);
+
+                    this.camera.position.lerpVectors(startPos, closePos, ease);
+                    this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
+                    this.controls.target.lerpVectors(startTarget, target, ease);
                     this.controls.update();
-                    
-                    if (t < 1) requestAnimationFrame(settleAnimate);
+
+                    if (t < 1) {
+                        requestAnimationFrame(zoomInAnimate);
+                    } else {
+                        // Second animation: settle to final position
+                        const settleStartTime = Date.now();
+                        const settleDuration = 700;
+                        const settleStartPos = this.camera.position.clone();
+
+                        const settleAnimate = () => {
+                            const elapsed = Date.now() - settleStartTime;
+                            const t = Math.min(elapsed / settleDuration, 1);
+                            const ease = 1 - Math.pow(1 - t, 3);
+
+                            this.camera.position.lerpVectors(settleStartPos, finalEndPos, ease);
+                            this.controls.update();
+
+                            if (t < 1) requestAnimationFrame(settleAnimate);
+                        };
+
+                        settleAnimate();
+                    }
                 };
-                
-                settleAnimate();
+
+                zoomInAnimate();
+            } else {
+                // Normal animation for close distances
+                const duration = 1500;
+                const startTime = Date.now();
+
+                const animate = () => {
+                    const elapsed = Date.now() - startTime;
+                    const t = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - t, 4);
+
+                    this.camera.position.lerpVectors(startPos, finalEndPos, ease);
+                    this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
+                    this.controls.target.lerpVectors(startTarget, target, ease);
+                    this.controls.update();
+
+                    if (t < 1) requestAnimationFrame(animate);
+                };
+
+                animate();
             }
-        };
-        
-        zoomInAnimate();
-    } else {
-        // Normal animation for close distances
-        const duration = 1500;
-        const startTime = Date.now();
-
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const t = Math.min(elapsed / duration, 1);
-            const ease = 1 - Math.pow(1 - t, 4);
-
-            this.camera.position.lerpVectors(startPos, finalEndPos, ease);
-            this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
-            this.controls.target.lerpVectors(startTarget, target, ease);
-            this.controls.update();
-
-            if (t < 1) requestAnimationFrame(animate);
-        };
-
-        animate();
-    }
-} else {
-    this.moveToHotspotView(hotspot);
-}
+        } else {
+            this.moveToHotspotView(hotspot);
+        }
         //outline seleected mesh
         const meshToOutline = this.model.getObjectByName(hotspotData.node);
 
@@ -969,6 +985,7 @@ if (cameraNode && cameraNode.isCamera) {
             console.warn(`❌ No camera node found for: ${camNodeName}`);
         }
     }
+
     moveCameraTo(positionArray, quaternionArray) {
         const startPos = this.camera.position.clone();
         const startQuat = this.camera.quaternion.clone();
@@ -1263,7 +1280,7 @@ if (cameraNode && cameraNode.isCamera) {
             const delta = this.clock.getDelta();
             this.mixer.update(delta);
         }
-
+        this.stats.update(); 
     }
 
     animateOutlineEdgeStrength(start, end, duration, onComplete) {
