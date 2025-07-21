@@ -621,9 +621,8 @@ class HotspotManager {
 
                 const startPos = this.camera.position.clone();
                 const startQuat = this.camera.quaternion.clone();
-                const startTarget = this.controls.target.clone();
-                const endTarget = new THREE.Vector3(0, 0, -1).applyQuaternion(targetQuat).add(targetPos);
-
+                // Keep orbit center at model center (0,0,0)
+                // Do NOT animate controls.target here!
                 const duration = 1000;
                 const startTime = Date.now();
 
@@ -634,7 +633,7 @@ class HotspotManager {
 
                     this.camera.position.lerpVectors(startPos, targetPos, ease);
                     this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
-                    this.controls.target.lerpVectors(startTarget, endTarget, ease);
+                    // controls.target remains at model center
                     this.controls.update();
 
                     if (t < 1) requestAnimationFrame(animate);
