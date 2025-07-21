@@ -62,8 +62,8 @@ class HotspotManager {
         gradientCanvas.height = 256;
         const ctx = gradientCanvas.getContext('2d');
         const gradient = ctx.createLinearGradient(0, 0, 0, 256);
-        gradient.addColorStop(0, '#ffffff'); // bottom - white
-        gradient.addColorStop(1, '#eeeeee'); // top - light grey
+        gradient.addColorStop(0, '#7C7C7C'); // bottom - white
+        gradient.addColorStop(1, '#ffffff'); // top - light grey
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 1, 256);
         const gradientTexture = new THREE.CanvasTexture(gradientCanvas);
@@ -155,7 +155,7 @@ class HotspotManager {
         //this.composer.render();
 
         // Add floor disc
-        const floorGeometry = new THREE.CircleGeometry(25, 48);
+        const floorGeometry = new THREE.CircleGeometry(35, 48);
         const floorMaterial = new THREE.MeshStandardMaterial({
             color: 0xbbbbbb,
             transparent: true,
@@ -184,7 +184,7 @@ class HotspotManager {
 
         // Set orbit boundaries
         this.controls.minDistance = 0.1; // Minimum zoom distance
-        this.controls.maxDistance = 25; // Maximum zoom distance
+        this.controls.maxDistance = 30; // Maximum zoom distance
         this.controls.minPolarAngle = Math.PI / 6; // Minimum vertical angle (30 degrees)
         this.controls.maxPolarAngle = Math.PI / 2; // Maximum vertical angle (120 degrees)
         // this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
@@ -420,11 +420,12 @@ class HotspotManager {
                     const maxDim = Math.max(size.x, size.y, size.z);
                     const fov = this.camera.fov * (Math.PI / 180);
                     let cameraZ = Math.abs(maxDim / Math.tan(fov / 2));
-                    this.camera.position.set(0, 0, cameraZ * .5);
-
+                    // Enforce a comfortable default reset distance (e.g., z=2)
+                    const defaultResetDistance = 25; // Between minDistance (0.1) and maxDistance (25)
+                    this.camera.position.set(0, 0, defaultResetDistance);
                     this.camera.lookAt(0, 0, 0);
                     this.camera.updateProjectionMatrix();
-                    this.initialCameraPosition = new THREE.Vector3(0, 0, cameraZ * .5);
+                    this.initialCameraPosition = new THREE.Vector3(0, 0, defaultResetDistance);
                     this.initialCameraTarget = new THREE.Vector3(0, 0, 0);
                     // Set orbit controls target to model center (orbit mode)
                     this.controls.target.set(0, 0, 0);
@@ -1077,32 +1078,26 @@ class HotspotManager {
         button.addEventListener('click', () => {
             console.log('🔄 Resetting view...');
 
-            // Reset camera to stored position & look at
-            const startPos = this.camera.position.clone();
-            const startQuat = this.camera.quaternion.clone();
+            // Enforce reset to a comfortable distance and allow zooming
             const targetPos = this.initialCameraPosition.clone();
             const targetTarget = this.initialCameraTarget.clone();
-
-            const targetQuat = new THREE.Quaternion();
-            const lookAtMatrix = new THREE.Matrix4().lookAt(targetPos, targetTarget, new THREE.Vector3(0, 1, 0));
-            targetQuat.setFromRotationMatrix(lookAtMatrix);
-
-            const startTime = Date.now();
+            const startPos = this.camera.position.clone();
+            const startTarget = this.controls.target.clone();
             const duration = 2000;
-
+            const startTime = Date.now();
             const animateReset = () => {
                 const elapsed = Date.now() - startTime;
                 const t = Math.min(elapsed / duration, 1);
                 const ease = 1 - Math.pow(1 - t, 4);
-
                 this.camera.position.lerpVectors(startPos, targetPos, ease);
-                this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
-                this.controls.target.lerpVectors(this.controls.target, targetTarget, ease);
+                this.controls.target.lerpVectors(startTarget, targetTarget, ease);
                 this.controls.update();
-
-                if (t < 1) requestAnimationFrame(animateReset);
+                if (t < 1) {
+                    requestAnimationFrame(animateReset);
+                } else {
+                    this.controls.update();
+                }
             };
-
             animateReset();
 
             // Reset material variant
