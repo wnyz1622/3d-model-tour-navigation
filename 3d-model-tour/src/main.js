@@ -183,8 +183,8 @@ class HotspotManager {
         this.controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
 
         // Set orbit boundaries
-        this.controls.minDistance = 0.05; // Minimum zoom distance
-        this.controls.maxDistance = 20; // Maximum zoom distance
+        this.controls.minDistance = 0.1; // Minimum zoom distance
+        this.controls.maxDistance = 25; // Maximum zoom distance
         this.controls.minPolarAngle = Math.PI / 6; // Minimum vertical angle (30 degrees)
         this.controls.maxPolarAngle = Math.PI / 2; // Maximum vertical angle (120 degrees)
         // this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
