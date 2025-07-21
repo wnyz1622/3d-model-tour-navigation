@@ -413,6 +413,9 @@ class HotspotManager {
                     this.camera.updateProjectionMatrix();
                     this.initialCameraPosition = new THREE.Vector3(0, 0, cameraZ * .5);
                     this.initialCameraTarget = new THREE.Vector3(0, 0, 0);
+                    // Set orbit controls target to model center (orbit mode)
+                    this.controls.target.set(0, 0, 0);
+                    this.controls.update();
                     // Create hotspots after model is loaded
                     this.createDefaultHotspots();
 
@@ -429,10 +432,6 @@ class HotspotManager {
                             }
                         }
                     });
-
-                    // Set orbit controls target to model center
-                    this.controls.target.set(0, 0, 10); // Move the target 1 unit forward
-                    this.controls.update();
 
                     resolve();
                 },
@@ -504,88 +503,29 @@ class HotspotManager {
 
         // 🔁 Move to predefined camera position if available
         const cameraNode = this.gltf.scene.getObjectByName('Cam_' + hotspotData.node);
-        if (cameraNode && cameraNode.isCamera) {
+        const hotspotNode = this.model.getObjectByName(hotspotData.node);
+        if (cameraNode && cameraNode.isCamera && hotspotNode) {
             const endPos = new THREE.Vector3();
             cameraNode.getWorldPosition(endPos);
-
-            const endQuat = new THREE.Quaternion();
-            cameraNode.getWorldQuaternion(endQuat);
-
+            const endTarget = new THREE.Vector3();
+            hotspotNode.getWorldPosition(endTarget);
             const startPos = this.camera.position.clone();
-            const startQuat = this.camera.quaternion.clone();
             const startTarget = this.controls.target.clone();
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(endQuat);
-            const target = endPos.clone().add(forward);
-
-            // Calculate distance and make zoom more dramatic when far away
-            const distance = startPos.distanceTo(endPos);
-            const farThreshold = 3.0; // Distance considered "far"
-
-            let finalEndPos = endPos;
-
-            // If camera is far away, move closer than the target first to make zoom more obvious
-            if (distance > farThreshold) {
-                const direction = startPos.clone().sub(endPos).normalize();
-                const closePos = endPos.clone().add(direction.multiplyScalar(0.3)); // Get very close
-
-                // First animation: zoom in close
-                const zoomInDuration = 800;
-                const zoomInStartTime = Date.now();
-
-                const zoomInAnimate = () => {
-                    const elapsed = Date.now() - zoomInStartTime;
-                    const t = Math.min(elapsed / zoomInDuration, 1);
-                    const ease = 1 - Math.pow(1 - t, 4);
-
-                    this.camera.position.lerpVectors(startPos, closePos, ease);
-                    this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
-                    this.controls.target.lerpVectors(startTarget, target, ease);
-                    this.controls.update();
-
-                    if (t < 1) {
-                        requestAnimationFrame(zoomInAnimate);
-                    } else {
-                        // Second animation: settle to final position
-                        const settleStartTime = Date.now();
-                        const settleDuration = 700;
-                        const settleStartPos = this.camera.position.clone();
-
-                        const settleAnimate = () => {
-                            const elapsed = Date.now() - settleStartTime;
-                            const t = Math.min(elapsed / settleDuration, 1);
-                            const ease = 1 - Math.pow(1 - t, 3);
-
-                            this.camera.position.lerpVectors(settleStartPos, finalEndPos, ease);
-                            this.controls.update();
-
-                            if (t < 1) requestAnimationFrame(settleAnimate);
-                        };
-
-                        settleAnimate();
-                    }
-                };
-
-                zoomInAnimate();
-            } else {
-                // Normal animation for close distances
-                const duration = 1500;
-                const startTime = Date.now();
-
-                const animate = () => {
-                    const elapsed = Date.now() - startTime;
-                    const t = Math.min(elapsed / duration, 1);
-                    const ease = 1 - Math.pow(1 - t, 4);
-
-                    this.camera.position.lerpVectors(startPos, finalEndPos, ease);
-                    this.camera.quaternion.slerpQuaternions(startQuat, endQuat, ease);
-                    this.controls.target.lerpVectors(startTarget, target, ease);
-                    this.controls.update();
-
-                    if (t < 1) requestAnimationFrame(animate);
-                };
-
-                animate();
-            }
+            // Animate both camera position and controls.target (orbit center)
+            const duration = 1500;
+            const startTime = Date.now();
+            const animate = () => {
+                const elapsed = Date.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - t, 4);
+                this.camera.position.lerpVectors(startPos, endPos, ease);
+                this.controls.target.lerpVectors(startTarget, endTarget, ease);
+                this.controls.update();
+                if (t < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+            animate();
         } else {
             this.moveToHotspotView(hotspot);
         }
@@ -943,46 +883,31 @@ class HotspotManager {
     moveToHotspotView(hotspot) {
         const camNodeName = `Cam_${hotspot.data.node}`;
         const camNode = this.model.getObjectByName(camNodeName);
-
-        if (camNode && camNode.isObject3D) {
+        const hotspotNode = this.model.getObjectByName(hotspot.data.node);
+        if (camNode && camNode.isObject3D && hotspotNode) {
             const endPos = new THREE.Vector3();
             camNode.getWorldPosition(endPos);
-
             const endTarget = new THREE.Vector3();
-            const forward = new THREE.Vector3();
-            camNode.getWorldDirection(forward);
-            endTarget.copy(endPos).add(forward);
-
+            hotspotNode.getWorldPosition(endTarget);
             const startPos = this.camera.position.clone();
-            const startQuat = this.camera.quaternion.clone();
-
-            const targetQuat = new THREE.Quaternion();
-            const lookAtMatrix = new THREE.Matrix4().lookAt(endPos, endTarget, new THREE.Vector3(0, 1, 0));
-            targetQuat.setFromRotationMatrix(lookAtMatrix);
-
             const startTarget = this.controls.target.clone();
-
+            // Animate both camera position and controls.target (orbit center)
             const duration = 1500;
             const startTime = Date.now();
-
             const animate = () => {
                 const elapsed = Date.now() - startTime;
                 const t = Math.min(elapsed / duration, 1);
                 const ease = 1 - Math.pow(1 - t, 4);
-
                 this.camera.position.lerpVectors(startPos, endPos, ease);
-                this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
                 this.controls.target.lerpVectors(startTarget, endTarget, ease);
                 this.controls.update();
-
                 if (t < 1) {
                     requestAnimationFrame(animate);
                 }
             };
-
             animate();
         } else {
-            console.warn(`❌ No camera node found for: ${camNodeName}`);
+            console.warn(`❌ No camera node or hotspot node found for: ${camNodeName}`);
         }
     }
 

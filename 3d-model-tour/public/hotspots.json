@@ -46,7 +46,7 @@
     "title": "Ground Guns",
     "camera": "Cam_07_GroundGuns",
     "type": "callout",
-    "description": "The Vestergaard Beta is equipped with 2 ground guns, one on each side of the truck."
+    "description": "The ground guns on the Elephant Beta are manually operated spray nozzles mounted on heated, flexible hoses stored in a side or rear cabinet. Designed for precision work, they’re ideal for treating landing gear, engine inlets, and hard-to-reach areas where boom access is limited. The hoses typically range from 10 to 15 meters and maintain fluid temperature for effective application in cold conditions. Operators can adjust spray pattern and, on newer models, select between Type I and Type IV fluids before spraying."
   },
   {
     "node": "08_EmergencyStops",
