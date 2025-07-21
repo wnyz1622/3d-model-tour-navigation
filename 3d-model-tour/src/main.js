@@ -49,15 +49,26 @@ class HotspotManager {
             //this.scene.background = new THREE.Color(0xf0f0f0);
         });
 
-        const bgLoader = new THREE.TextureLoader();
-        bgLoader.load('media/model/GradientBackground_2.png', (bgTexture) => {
-            // Set filtering for background texture
-            if (bgTexture.minFilter !== undefined) bgTexture.minFilter = THREE.LinearMipmapLinearFilter;
-            if (bgTexture.magFilter !== undefined) bgTexture.magFilter = THREE.LinearFilter;
-            bgTexture.needsUpdate = true;
-            this.scene.background = bgTexture; // ✅ visible background
-        });
-
+        // const bgLoader = new THREE.TextureLoader();
+        // bgLoader.load('media/model/GradientBackground_2.png', (bgTexture) => {
+        //     // Set filtering for background texture
+        //     if (bgTexture.minFilter !== undefined) bgTexture.minFilter = THREE.LinearMipmapLinearFilter;
+        //     if (bgTexture.magFilter !== undefined) bgTexture.magFilter = THREE.LinearFilter;
+        //     bgTexture.needsUpdate = true;
+        //     this.scene.background = bgTexture; // ✅ visible background
+        // });
+        const gradientCanvas = document.createElement('canvas');
+        gradientCanvas.width = 1;
+        gradientCanvas.height = 256;
+        const ctx = gradientCanvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+        gradient.addColorStop(0, '#ffffff'); // bottom - white
+        gradient.addColorStop(1, '#eeeeee'); // top - light grey
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1, 256);
+        const gradientTexture = new THREE.CanvasTexture(gradientCanvas);
+        this.scene.background = gradientTexture;
+        
         // Create camera
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 0, 0);
@@ -73,7 +84,7 @@ class HotspotManager {
             preserveDrawingBuffer: false
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        this.renderer.setPixelRatio(1);
         this.renderer.outputEncoding = THREE.sRGBEncoding;
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -178,7 +189,7 @@ class HotspotManager {
         this.controls.maxPolarAngle = Math.PI / 2; // Maximum vertical angle (120 degrees)
         // this.controls.minAzimuthAngle = -Math.PI; // Allow full 360 rotation
         // this.controls.maxAzimuthAngle = Math.PI;
-        this.controls.enablePan = false; // Disable panning to keep focus on the model
+        this.controls.enablePan = true; // Disable panning to keep focus on the model
         this.controls.target.y = 0; // Keep the orbit target at floor level
 
         // Setup loaders
@@ -217,7 +228,8 @@ class HotspotManager {
         // this.scene.add(test);
         // this.outlineEffect.selection.set([test]);
         this.stats = new Stats();
-        //document.body.appendChild(this.stats.dom);
+        //hide fps on screen
+        // document.body.appendChild(this.stats.dom);
         // Start animation loop
         this.clock = new THREE.Clock();
         this.animate();
@@ -226,12 +238,13 @@ class HotspotManager {
 
     setupLoaders() {
         // Setup DRACO loader
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-        
+        this.dracoLoader = new DRACOLoader();
+        this.dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+        this.dracoLoader.preload(); // <--- Preload Draco decoder
+
         // Setup GLTF loader
         this.loader = new GLTFLoader();
-        this.loader.setDRACOLoader(dracoLoader);
+        this.loader.setDRACOLoader(this.dracoLoader);
     }
 
     async loadModel() {
