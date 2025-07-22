@@ -111,12 +111,22 @@ class HotspotManager {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('container').appendChild(this.renderer.domElement);
 
+        // Add WebGL context loss handler
+        this.renderer.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            alert('WebGL context lost. Please reload the page.');
+        }, false);
+
         // Add right-center SVG arrow
         const rightArrow = document.createElement('img');
         rightArrow.src = 'media/MouseControl.svg'; // adjust path if needed
         rightArrow.alt = 'Next';
         rightArrow.id = 'right-center-arrow';
         document.body.appendChild(rightArrow);
+        // Touch support for right arrow
+        rightArrow.addEventListener('touchstart', (e) => {
+            rightArrow.click();
+        });
 
         // 🔆 Enable tone mapping and adjust exposure
         this.renderer.toneMapping = THREE.LinearToneMapping; // or THREE.ReinhardToneMapping
@@ -406,14 +416,14 @@ class HotspotManager {
                                 });
                             }
                             //triangle counts
-                            let triangleCount = 0;
-                            this.model.traverse((obj) => {
-                                if (obj.isMesh) {
-                                    const geom = obj.geometry;
-                                    triangleCount += geom.index ? geom.index.count / 3 : geom.attributes.position.count / 3;
-                                }
-                            });
-                            console.log("🔺 Triangle count:", triangleCount);
+                            // let triangleCount = 0;
+                            // this.model.traverse((obj) => {
+                            //     if (obj.isMesh) {
+                            //         const geom = obj.geometry;
+                            //         triangleCount += geom.index ? geom.index.count / 3 : geom.attributes.position.count / 3;
+                            //     }
+                            // });
+                            // console.log("🔺 Triangle count:", triangleCount);
                             this.interactiveMeshes = []; // ✅ New array for raycasting
 
                             this.model.traverse((node) => {
@@ -868,6 +878,11 @@ class HotspotManager {
             hotspotDiv.addEventListener('click', () => {
                 this.handleHotspotClick(hotspot);
             });
+            // Touch support for hotspot
+            hotspotDiv.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                hotspotDiv.click();
+            });
 
             hotspotDiv.addEventListener('mouseenter', () => {
                 if (this.selectedHotspot !== hotspot) {
@@ -1298,6 +1313,8 @@ class HotspotManager {
     }
 
     animate() {
+        // Pause rendering when page is hidden
+        if (document.hidden) return;
         requestAnimationFrame(this.animate.bind(this));
         this.controls.update();
         // Only update hotspot positions if camera or controls changed
