@@ -189,6 +189,11 @@ canvas {
     .hotspot-title {
         font-size: 11pt;
     }
+
+    #right-center-arrow {
+        display: none;
+      }
+      
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
@@ -632,3 +637,5 @@ canvas {
   opacity: 0.75;
   transition: opacity 0.2s;
 }
+
+
