@@ -1142,7 +1142,7 @@ class HotspotManager {
 
         // Update composer
         this.composer.setSize(window.innerWidth, window.innerHeight);
-        this.composer.setPixelRatio(pixelRatio);
+        //this.composer.setPixelRatio(pixelRatio); // This line was causing the error
 
         // Update outline effect resolution with proper scaling
         if (this.outlineEffect && this.outlineEffect.resolution) {
