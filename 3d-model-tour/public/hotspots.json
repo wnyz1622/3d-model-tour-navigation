@@ -50,7 +50,7 @@
   },
   {
     "node": "08_EmergencyStops",
-    "title": "Emergency Stops",
+    "title": "Emergency Stops (E-Stop)",
     "camera": "Cam_08_EmergencyStops",
     "type": "callout",
     "description": "In an emergency requiring immediate termination of all boom movement, fluid pumping and operational drive: The location of all emergency stop switches for the local station equipment will be trained in the equipment operator training."
@@ -191,5 +191,19 @@
    "camera": "Cam_28_RoundKnob",
    "type": "callout",
    "description": "Sometimes a master gain or mic sensitivity adjustment (depending on model — could also be push-to-test for the audio line)."
- }
+ },
+ {
+  "node": "29_EmergencyStop",
+  "title": "Emergency Stop (E‑Stop)",
+  "camera": "Cam_29_EmergencyStop",
+  "type": "callout",
+  "description": "The top red button is the emergency stop, designed for instant shutdown of hydraulic power and pump systems from the ground. It’s a large, mushroom-style pushbutton that immediately halts operations in critical situations."
+},
+{
+  "node": "30_SystemRestartReset",
+  "title": "System Restart/Reset",
+  "camera": "Cam_30_SystemRestartReset",
+  "type": "callout",
+  "description": "The button underneath is the system reset, often referred to as a restart or acknowledge button. After the top E‑stop is activated, this button must be pressed to reset the emergency circuit—sometimes followed by compliance steps before normal operations resume."
+}
 ]

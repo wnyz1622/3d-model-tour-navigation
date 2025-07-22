@@ -28,7 +28,28 @@ class HotspotManager {
         this.LOD_DISTANCE = 10;
         this.CULL_DISTANCE = 50;
         this.targetFPS = 60;
+        // Raycast optimization
+        this.raycastThrottle = 0;
+        this.raycastInterval = 3; // Only raycast every 3 frames
+        this.lastRaycastResults = new Map();
+        this.raycastCache = new Map();
+        this.cacheTimeout = 500; // Cache results for 500ms
 
+        // Frustum culling
+        this.frustum = new THREE.Frustum();
+        this.cameraMatrix = new THREE.Matrix4();
+
+        // Object pooling for raycaster
+        this.raycaster = new THREE.Raycaster();
+        this.tempVector = new THREE.Vector3();
+        this.tempVector2 = new THREE.Vector3();
+        this.tempMatrix = new THREE.Matrix4();
+
+        // Track camera/controls changes for hotspot update
+        this.cameraChanged = true;
+        this.controlsChanged = true;
+        this.lastCameraPosition = new THREE.Vector3();
+        this.lastCameraQuaternion = new THREE.Quaternion();
     }
 
     async init() {
@@ -36,7 +57,7 @@ class HotspotManager {
         // Create scene
         this.scene = new THREE.Scene();
         this.clock = new THREE.Clock();
-        
+
         const rgbeLoader = new RGBELoader();
         rgbeLoader.load('media/model/cannon_1k.hdr', (hdrTexture) => {
             hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
@@ -68,7 +89,7 @@ class HotspotManager {
         ctx.fillRect(0, 0, 1, 256);
         const gradientTexture = new THREE.CanvasTexture(gradientCanvas);
         this.scene.background = gradientTexture;
-        
+
         // Create camera
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 0, 0);
@@ -89,6 +110,13 @@ class HotspotManager {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('container').appendChild(this.renderer.domElement);
+
+        // Add right-center SVG arrow
+        const rightArrow = document.createElement('img');
+        rightArrow.src = 'media/MouseControl.svg'; // adjust path if needed
+        rightArrow.alt = 'Next';
+        rightArrow.id = 'right-center-arrow';
+        document.body.appendChild(rightArrow);
 
         // 🔆 Enable tone mapping and adjust exposure
         this.renderer.toneMapping = THREE.LinearToneMapping; // or THREE.ReinhardToneMapping
@@ -152,7 +180,6 @@ class HotspotManager {
 
         //add effect pass to composer
         this.composer.addPass(effectPass);
-        //this.composer.render();
 
         // Add floor disc
         const floorGeometry = new THREE.CircleGeometry(35, 48);
@@ -192,6 +219,11 @@ class HotspotManager {
         this.controls.enablePan = true; // Disable panning to keep focus on the model
         this.controls.target.y = 0; // Keep the orbit target at floor level
 
+        // Track camera/controls changes for hotspot update
+        this.controls.addEventListener('change', () => {
+            this.controlsChanged = true;
+        });
+
         // Setup loaders
         this.setupLoaders();
 
@@ -215,7 +247,16 @@ class HotspotManager {
             setTimeout(() => this.onWindowResize(), 500); // double fire for safety
         });
         // Add event listeners
-        window.addEventListener('resize', this.onWindowResize.bind(this));
+        // Debounced resize handler
+        let resizeTimeout = null;
+        window.addEventListener('resize', () => {
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.onWindowResize();
+                this.cameraChanged = true;
+                this.controlsChanged = true;
+            }, 100);
+        });
         this.setupFullscreenButton();
         this.setupTechSpecToggle();
         this.setupResetButton();
@@ -229,7 +270,7 @@ class HotspotManager {
         // this.outlineEffect.selection.set([test]);
         this.stats = new Stats();
         //hide fps on screen
-        // document.body.appendChild(this.stats.dom);
+        //document.body.appendChild(this.stats.dom);
         // Start animation loop
         this.clock = new THREE.Clock();
         this.animate();
@@ -260,7 +301,11 @@ class HotspotManager {
             };
 
             loadingManager.onLoad = () => {
-                document.getElementById('loadingScreen').style.display = 'none';
+                const loadingEl = document.getElementById('loadingScreen');
+                loadingEl.style.opacity = 0;
+                setTimeout(() => {
+                    loadingEl.style.display = 'none';
+                }, 300); // Match CSS transition duration
                 resolve();
             };
 
@@ -277,7 +322,7 @@ class HotspotManager {
             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             this.loader.setDRACOLoader(dracoLoader);
 
-            const modelPath = 'media/model/scene2k-v5-v3.glb';
+            const modelPath = 'media/model/scene2k-v5-v4.glb';
             console.log('Loading model from:', modelPath);
 
             this.loader.load(
@@ -360,6 +405,28 @@ class HotspotManager {
                                     position: position
                                 });
                             }
+                            //triangle counts
+                            let triangleCount = 0;
+                            this.model.traverse((obj) => {
+                                if (obj.isMesh) {
+                                    const geom = obj.geometry;
+                                    triangleCount += geom.index ? geom.index.count / 3 : geom.attributes.position.count / 3;
+                                }
+                            });
+                            console.log("🔺 Triangle count:", triangleCount);
+                            this.interactiveMeshes = []; // ✅ New array for raycasting
+
+                            this.model.traverse((node) => {
+                                if (node.isMesh && node.visible) {
+                                    this.interactiveMeshes.push(node); // ✅ Store raycastable mesh
+                                }
+                            });
+                        }
+                    });
+                    this.interactiveMeshes = [];
+                    this.model.traverse((node) => {
+                        if (node.isMesh && node.visible) {
+                            this.interactiveMeshes.push(node);
                         }
                     });
 
@@ -615,14 +682,21 @@ class HotspotManager {
 
                 const targetPos = new THREE.Vector3();
                 cameraNode.getWorldPosition(targetPos);
-
                 const targetQuat = new THREE.Quaternion();
                 cameraNode.getWorldQuaternion(targetQuat);
-
                 const startPos = this.camera.position.clone();
                 const startQuat = this.camera.quaternion.clone();
-                // Keep orbit center at model center (0,0,0)
-                // Do NOT animate controls.target here!
+                const startTarget = this.controls.target.clone();
+
+                let endTarget;
+                if (camData.title === 'Exterior') {
+                    // For exterior camera, always orbit model center
+                    endTarget = new THREE.Vector3(0, 0, 0);
+                } else {
+                    // For other cameras, orbit the camera's look-at point
+                    endTarget = new THREE.Vector3(0, 0, -1).applyQuaternion(targetQuat).add(targetPos);
+                }
+
                 const duration = 1000;
                 const startTime = Date.now();
 
@@ -633,7 +707,7 @@ class HotspotManager {
 
                     this.camera.position.lerpVectors(startPos, targetPos, ease);
                     this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, ease);
-                    // controls.target remains at model center
+                    this.controls.target.lerpVectors(startTarget, endTarget, ease);
                     this.controls.update();
 
                     if (t < 1) requestAnimationFrame(animate);
@@ -825,6 +899,10 @@ class HotspotManager {
                 }
             });
         });
+        // Ensure hotspots are visible by default after all are created
+        this.cameraChanged = false;
+        this.controlsChanged = true;
+        this.updateHotspotPositions();
     }
 
     updateTitleDisplay() {
@@ -956,6 +1034,26 @@ class HotspotManager {
     updateHotspotPositions() {
         if (!this.hotspots) return;
 
+        // Only update if camera or controls have changed
+        const camPos = this.camera.position;
+        const camQuat = this.camera.quaternion;
+        if (
+            !this.cameraChanged &&
+            !this.controlsChanged &&
+            camPos.equals(this.lastCameraPosition) &&
+            camQuat.equals(this.lastCameraQuaternion)
+        ) {
+            return;
+        }
+        this.lastCameraPosition.copy(camPos);
+        this.lastCameraQuaternion.copy(camQuat);
+        this.cameraChanged = false;
+        this.controlsChanged = false;
+
+        this.raycastThrottle = (this.raycastThrottle + 1) % this.raycastInterval;
+        const doRaycast = this.raycastThrottle === 0;
+        const now = performance.now();
+
         this.hotspots.forEach(hotspot => {
             // Get the world position of the hotspot mesh
             const worldPosition = new THREE.Vector3();
@@ -973,47 +1071,45 @@ class HotspotManager {
             const x = (screenPosition.x + 1) * window.innerWidth / 2;
             const y = (-screenPosition.y + 1) * window.innerHeight / 2;
 
-            // Perform raycasting to check if hotspot is behind objects
-            const raycaster = new THREE.Raycaster();
-            const direction = worldPosition.clone().sub(this.camera.position).normalize();
-            raycaster.set(this.camera.position, direction);
-
-            // Get all intersections between camera and hotspot position
-            const intersects = raycaster.intersectObjects(this.scene.children, true);
-
-            // Calculate distance to hotspot
-            const distanceToHotspot = this.camera.position.distanceTo(worldPosition);
-
-            // Check if hotspot is occluded by comparing distances
-            const isOccluded = intersects.length > 0 && intersects[0].distance < distanceToHotspot - 0.1;
+            // Throttle and cache raycasting
+            let isOccluded = false;
+            if (doRaycast) {
+                const direction = worldPosition.clone().sub(this.camera.position).normalize();
+                this.raycaster.set(this.camera.position, direction);
+                const intersects = this.raycaster.intersectObjects(this.interactiveMeshes, true);
+                const distanceToHotspot = this.camera.position.distanceTo(worldPosition);
+                isOccluded = intersects.length > 0 && intersects[0].distance < distanceToHotspot - 0.1;
+                this.raycastCache.set(hotspot, { isOccluded, time: now });
+            } else {
+                const cached = this.raycastCache.get(hotspot);
+                if (cached && now - cached.time < this.cacheTimeout) {
+                    isOccluded = cached.isOccluded;
+                } else {
+                    // Fallback: do a raycast if cache is stale
+                    const direction = worldPosition.clone().sub(this.camera.position).normalize();
+                    this.raycaster.set(this.camera.position, direction);
+                    const intersects = this.raycaster.intersectObjects(this.interactiveMeshes, true);
+                    const distanceToHotspot = this.camera.position.distanceTo(worldPosition);
+                    isOccluded = intersects.length > 0 && intersects[0].distance < distanceToHotspot - 0.1;
+                    this.raycastCache.set(hotspot, { isOccluded, time: now });
+                }
+            }
 
             // Update visibility based on all conditions
-            if (isBehindCamera || !isInView || isOccluded) {
-                hotspot.element.style.display = 'none';
-                hotspot.info.style.display = 'none';
-            } else {
-                hotspot.element.style.display = 'block';
-                //hotspot.description.style.display = 'block';
-                // Only show info if hovering
-                if (hotspot === this.selectedHotspot) {
-                    hotspot.info.style.display = 'block';
-                    hotspot.info.classList.add('active');
-                } else if (hotspot.element.matches(':hover')) {
-                    hotspot.info.style.display = 'block';
-                    hotspot.info.classList.remove('active');
-                } else {
-                    hotspot.info.style.display = 'none';
-                    hotspot.info.classList.remove('active');
-                }
-
+            const shouldShow = !(isBehindCamera || !isInView || isOccluded);
+            if (hotspot.element.style.display !== (shouldShow ? 'block' : 'none')) {
+                hotspot.element.style.display = shouldShow ? 'block' : 'none';
             }
-            // Always update hotspot icon position
-            hotspot.element.style.left = `${x}px`;
-            hotspot.element.style.top = `${y}px`;
+            if (hotspot.info.style.display !== (shouldShow && (hotspot === this.selectedHotspot || hotspot.element.matches(':hover')) ? 'block' : 'none')) {
+                hotspot.info.style.display = (shouldShow && (hotspot === this.selectedHotspot || hotspot.element.matches(':hover'))) ? 'block' : 'none';
+            }
 
-            // Always position the inactive hotspot info beside the icon
-            hotspot.info.style.left = `${x + 20}px`;
-            hotspot.info.style.top = `${y}px`;
+            // Only update position if changed
+            if (hotspot.element.style.left !== `${x}px`) hotspot.element.style.left = `${x}px`;
+            if (hotspot.element.style.top !== `${y}px`) hotspot.element.style.top = `${y}px`;
+            if (hotspot.info.style.left !== `${x + 20}px`) hotspot.info.style.left = `${x + 20}px`;
+            if (hotspot.info.style.top !== `${y}px`) hotspot.info.style.top = `${y}px`;
+
             function isMobileView() {
                 return window.innerWidth < 600 || window.innerHeight < 400;
             }
@@ -1025,15 +1121,14 @@ class HotspotManager {
                     hotspot.info.style.top = '';
                 } else {
                     hotspot.info.classList.remove('mobile-fixed');
-                    hotspot.info.style.left = `${x + 20}px`;
-                    hotspot.info.style.top = `${y}px`;
+                    if (hotspot.info.style.left !== `${x + 20}px`) hotspot.info.style.left = `${x + 20}px`;
+                    if (hotspot.info.style.top !== `${y}px`) hotspot.info.style.top = `${y}px`;
                 }
             } else {
                 hotspot.info.classList.remove('mobile-fixed');
-                hotspot.info.style.left = `${x + 20}px`;
-                hotspot.info.style.top = `${y}px`;
+                if (hotspot.info.style.left !== `${x + 20}px`) hotspot.info.style.left = `${x + 20}px`;
+                if (hotspot.info.style.top !== `${y}px`) hotspot.info.style.top = `${y}px`;
             }
-
         });
     }
 
@@ -1205,14 +1300,19 @@ class HotspotManager {
     animate() {
         requestAnimationFrame(this.animate.bind(this));
         this.controls.update();
-        this.updateHotspotPositions();
+        // Only update hotspot positions if camera or controls changed
+        if (this.cameraChanged || this.controlsChanged) {
+            this.updateHotspotPositions();
+            this.cameraChanged = false;
+            this.controlsChanged = false;
+        }
         //this.renderer.render(this.scene, this.camera);
         this.composer.render();
         if (this.mixer) {
             const delta = this.clock.getDelta();
             this.mixer.update(delta);
         }
-        this.stats.update(); 
+        this.stats.update();
     }
 
     animateOutlineEdgeStrength(start, end, duration, onComplete) {
