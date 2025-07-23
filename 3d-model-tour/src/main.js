@@ -228,7 +228,12 @@ class HotspotManager {
         // this.controls.maxAzimuthAngle = Math.PI;
         this.controls.enablePan = true; // Disable panning to keep focus on the model
         this.controls.target.y = 0; // Keep the orbit target at floor level
-
+        // Keep target from going below floor
+        this.controls.addEventListener('change', () => {
+            if (this.controls.target.y < -5.3) {
+                this.controls.target.y = -5.3;
+            }
+        });
         // Track camera/controls changes for hotspot update
         this.controls.addEventListener('change', () => {
             this.controlsChanged = true;
@@ -1211,6 +1216,7 @@ class HotspotManager {
 
             // Reset material variant
             this.applyMaterialVariant('00_Default');
+            this.outlineEffect.selection.clear();
 
             // Hide any open callout
             if (this.selectedHotspot) {
