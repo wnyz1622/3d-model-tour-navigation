@@ -141,7 +141,7 @@
     "title": "HMI Display",
     "camera": "Cam_21_HMIdisplay",
     "type": "callout",
-     "description": "HMI display (a Human‑Machine Interface) which is tied to the basket’s control system. Here’s what it does:\n\n•  Operational Feedback: Shows system status—hydraulic pressure, fluid mix, temperature, and alerts.\n\n• Mode Transitions: Lets you shift between standard modes (spray, stow, service) and shows prompts—like when a keypad override is needed.\n\n• Diagnostics & Alarms: Displays error codes or warnings, especially during or after an E‑stop event, and triggers the keypad reset to continuead."
+     "description": "HMI display (a Human‑Machine Interface) which is tied to the basket’s control system. Here’s what it does:\n\n•  Operational Feedback: Shows system status—hydraulic pressure, fluid mix, temperature, and alerts.\n\n• Mode Transitions: Lets you shift between standard modes (spray, stow, service) and shows prompts—like when a keypad override is needed.\n\n• Diagnostics & Alarms: Displays error codes or warnings, especially during or after an E‑stop event, and triggers the keypad reset to continue."
  },
  {
    "node": "22_Maintenance&OverrideAccess",
